@@ -1,32 +1,157 @@
-# React + TypeScript + Vite
+# 🎙️ SpeakDaily
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**A personal English speaking trainer for a 12-week, interview-focused B1 → B2 program.**
+Every day it gives you a shadowing exercise and a speaking prompt that fit your week of the program. You record yourself and see a live transcript, then get instant stats: pace, filler words, pauses, connectors and vocabulary variety. Every recording is archived, so you can hear how you've improved.
 
-Currently, two official plugins are available:
+No backend, no account. Everything (including audio) stays in your browser.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> Built with React 19, Vite, TypeScript (strict), IndexedDB, MediaRecorder and the Web Speech API.
 
-## React Compiler
+**Live demo:** `https://<your-github-username>.github.io/speakdaily/`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## Screenshots
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+| Today | Recorder + analysis | Progress |
+| --- | --- | --- |
+| _`docs/screenshots/today.png`_ | _`docs/screenshots/recorder.png`_ | _`docs/screenshots/progress.png`_ |
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+| Shadowing | Compare attempts | Mock interview |
+| --- | --- | --- |
+| _`docs/screenshots/shadowing.png`_ | _`docs/screenshots/compare.png`_ | _`docs/screenshots/mock.png`_ |
+
+<!-- Replace the placeholders with real screenshots: ![Today](docs/screenshots/today.png) -->
+
+---
+
+## Features
+
+### 📅 12-week program and roadmap
+- Set a start date once; the app works out your current **week, day and phase**.
+- Every week has a goal and focus points, and each phase has its own daily routine checklist.
+- Shows how many days you practised in each week.
+
+### ✅ Today screen
+- **Shadowing passage**, a **speaking prompt** sized to your phase (60 s, 120 s or 180 s), and in phases 2–3 a **STAR question** every other day.
+- **Weekly mock interview** on day 7 of each week from phase 2 on. Week 12 ends with a full mock **video** interview.
+- Daily tasks are deterministic (seeded by your start date), so they don't change on reload, and they don't repeat within a phase. You can still shuffle them.
+- **Streak** counter and **total minutes spoken**.
+
+### 🎙️ Recorder
+- Countdown timer with auto-stop (the limit can be changed per answer), a big record button, and a **live transcript** (SpeechRecognition, `en-US`, continuous and interim results, restarts itself when Chrome ends a session).
+- Optional **camera** recording in phase 3 and in mock interviews.
+- Instant analysis:
+  - word count and **words per minute**
+  - **filler words** (um, uh, like, you know, basically, actually, so, I mean, kind of, sort of — editable), highlighted in the transcript
+  - **longest pause**, approximated from the gaps between speech-recognition events
+  - **B2 connector phrases** you used, plus 3 unused ones to try next time
+  - **vocabulary variety** (unique words ÷ total words)
+  - short rule-based tips
+- **Record again** keeps every attempt, and lists your earlier attempts at the same prompt.
+
+### 🎧 Shadowing
+- 32 interview- and workplace-themed passages (54–70 words each).
+- Listen → speak along → record. Text-to-speech runs at **0.7×–1.2×** with a choice of voice and highlights the current word.
+- A **word-match score** (LCS alignment that ignores case and punctuation) shows the words you missed and what the recogniser heard instead.
+
+### 📚 Question bank
+- **124 prompts** in [`src/data/prompts.ts`](src/data/prompts.ts), each with a category, phase, suggested time and 3 hint bullets.
+- Categories: `interview`, `tech`, `daily`, `opinion`, `star`. Written for a computer-science student in Turkey preparing for corporate (telecom / tech) interviews.
+- Filter by category and phase, search, pick a random prompt, and see how many times you've practised each one.
+
+### 💼 Mock interview
+- 5 or 10 random interview and STAR questions, one at a time, each with a timer (optionally on camera).
+- Saved as a **session**, with a summary at the end: per-question stats, totals and playback. Past sessions can be reopened.
+
+### 📈 Archive and progress
+- Every recording with its date, prompt, duration, WPM and filler count, plus an audio/video player, search, filters and delete.
+- **Export everything as a .zip** (audio files, `transcript.txt` per recording, and `recordings.json`).
+- **Compare** two attempts at the same prompt side by side; the better value in each row is highlighted.
+- Charts (Recharts): WPM over time with a target band, fillers per minute over time, minutes per week, and a **12-week practice heatmap**.
+
+### ⚙️ Settings
+- Start date, time-limit override, editable filler list, recognition language locked to `en-US`, dark/light theme (dark by default).
+- Shows storage usage and lets you request **persistent storage**, so the browser won't evict months of recordings.
+- **Clear all data**, with a confirmation step.
+
+---
+
+## The 12-week program
+
+| Phase | Weeks | Name | Answer length | Daily routine |
+| --- | --- | --- | --- | --- |
+| 1 | 1–4 | **Open your mouth** | 60 s | Shadow one passage · answer one prompt without stopping · look at your fillers · re-record once |
+| 2 | 5–8 | **Structure** | 2–3 min | Shadow at 1.0× · clear opening / points / conclusion · STAR question every other day · 3+ connectors · 10-question mock interview each week |
+| 3 | 9–12 | **Push to B2** | 3 min | Shadow at 1.1–1.2× · random unseen topics · STAR on camera (optional) · compare with old recordings · final full mock video interview |
+
+| Week | Focus | Goal |
+| --- | --- | --- |
+| 1 | Break the ice | Record every day; finish 60 s without stopping |
+| 2 | Talk about you | A fluent 60-second "Tell me about yourself" |
+| 3 | Fewer fillers | Replace "um / uh" with a short silent pause |
+| 4 | Keep the flow | ~110+ WPM on familiar topics, < 4 fillers/min |
+| 5 | Opening and closing | Every answer has a one-sentence opening and conclusion |
+| 6 | STAR basics | Behavioural answers in Situation → Task → Action → Result |
+| 7 | Explain like an engineer | Explain tech clearly to technical and non-technical listeners |
+| 8 | Mock interview week | A 10-question mock; compare with week 5 |
+| 9 | Spontaneous speaking | 3 minutes on a random topic, no preparation |
+| 10 | Camera on | Check eye contact, posture and pace |
+| 11 | Pressure test | Design questions, pitches, disagreements, calmly |
+| 12 | Final interview | Full mock video interview; compare with your week-1 recordings |
+
+---
+
+## Getting started
+
+```bash
+npm install
+npm run dev        # http://localhost:5173/speakdaily/
+npm test           # unit tests (Vitest)
+npm run lint       # oxlint, warnings fail the run
+npm run build      # type-check + production build into dist/
+npm run preview    # serve the production build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+**Browser:** use **Google Chrome** (desktop or Android). Live transcription relies on the Web Speech API, which Chrome supports best. In Chrome it sends audio to Google's speech service, so it needs an internet connection. Other browsers can still record and play back; the app tells you clearly what isn't supported. Microphone access needs `https` or `localhost`.
+
+## Deploy (GitHub Pages)
+
+The repo ships with [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). It lints, tests and builds on every push to `main`, then publishes `dist/` to GitHub Pages.
+
+1. Create a GitHub repository named **`speakdaily`** (the Vite `base` in `vite.config.ts` is `/speakdaily/`; change it if you use a different name).
+2. Push: `git remote add origin git@github.com:<you>/speakdaily.git && git push -u origin main`
+3. On GitHub, go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+4. The next push (or **Actions → Deploy to GitHub Pages → Run workflow**) deploys to `https://<you>.github.io/speakdaily/`.
+
+Routing uses `HashRouter`, so deep links work on GitHub Pages without a 404 fallback.
+
+---
+
+## Project structure
+
+```
+src/
+  components/   RecorderPanel, AnalysisView, HighlightedTranscript, ComparePanel, MockSummary, …
+  data/         prompts.ts (124), passages.ts (32), program.ts (phases + weeks)
+  hooks/        useRecorder, useSpeechRecognition, useSpeechSynthesis, useRecordings, useApp, …
+  lib/
+    analysis/   Analyzer interface + local rule-based analyzer (swap in an LLM later)
+    db.ts       IndexedDB (idb): recordings + mock sessions
+    storage.ts  localStorage: settings + daily progress log
+    program.ts  week/phase calculation, deterministic daily plan
+    similarity.ts  LCS word alignment for shadowing
+    speech.ts   typed, auto-restarting SpeechRecognition wrapper
+    …
+  pages/        Today, Roadmap, Record, Shadowing, Questions, Mock, Archive, Progress, Settings
+  state/        AppProvider (settings + progress context)
+```
+
+### Design notes
+- **The analyzer is pluggable.** `lib/analysis` exposes an `Analyzer` interface (`analyze(input) → Promise<AnalysisResult>`). The local rule-based analyzer is the default. An API-backed analyzer (e.g. Claude feedback on content, grammar and structure) can be added with `setAnalyzer()`. If it throws, `analyzeAnswer()` falls back to the local stats, so saving never breaks.
+- **Storage split.** Audio and video blobs and their transcripts go in IndexedDB. Small settings and the per-day progress log go in localStorage, so the streak and minutes on the Today screen load instantly.
+- **Strict TypeScript with no `any`.** The Web Speech API isn't in the DOM typings, so `lib/speech.ts` types the parts the app uses.
+
+## License
+
+MIT — add a `LICENSE` file with your name before publishing.
