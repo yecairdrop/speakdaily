@@ -213,12 +213,28 @@ video {
   margin: 0;
 }
 
+.footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 1.5rem 1rem 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.theme-toggle {
+  flex: none;
+}
+
 @media (max-width: 720px) {
   .topbar-inner {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr auto;
     gap: 0.4rem;
     padding-bottom: 0.4rem;
+  }
+  .topbar-inner .nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }
 
@@ -846,18 +862,18 @@ mark.connector {
 /* ---------- Heatmap ---------- */
 .heatmap {
   display: grid;
-  grid-template-rows: repeat(7, 14px);
+  grid-template-rows: repeat(7, 18px);
   grid-auto-flow: column;
-  grid-auto-columns: 14px;
-  gap: 3px;
+  grid-auto-columns: 18px;
+  gap: 4px;
   overflow-x: auto;
   padding-bottom: 0.25rem;
 }
 
 .heat-cell {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   background: var(--heat-0);
 }
 

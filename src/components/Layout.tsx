@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { REPO_URL } from '../config'
+import { useApp } from '../hooks/useApp'
 
 const NAV = [
   { to: '/', label: 'Today', end: true },
@@ -12,6 +14,8 @@ const NAV = [
 ]
 
 export function Layout() {
+  const { settings, updateSettings } = useApp()
+  const nextTheme = settings.theme === 'dark' ? 'light' : 'dark'
   return (
     <div className="app">
       <header className="topbar">
@@ -27,11 +31,26 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost theme-toggle"
+            onClick={() => updateSettings({ theme: nextTheme })}
+            aria-label={`Switch to ${nextTheme} mode`}
+            title={`Switch to ${nextTheme} mode`}
+          >
+            {settings.theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
       </header>
       <main className="main">
         <Outlet />
       </main>
+      <footer className="footer">
+        SpeakDaily · your recordings never leave this browser ·{' '}
+        <a href={REPO_URL} target="_blank" rel="noreferrer">
+          source on GitHub
+        </a>
+      </footer>
     </div>
   )
 }

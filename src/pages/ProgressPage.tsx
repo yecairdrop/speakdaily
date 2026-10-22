@@ -174,7 +174,7 @@ export default function ProgressPage() {
         </div>
       )}
 
-      {weekly.length > 0 && (
+      {weekly.some((w) => w.minutes > 0) && (
         <div className="card">
           <h2>Minutes spoken per week</h2>
           <div className="chart-box">
