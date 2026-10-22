@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { toDateKey } from '../dates'
 import { DEFAULT_SETTINGS } from '../storage'
 import { getProgramPosition, getTodayPlan } from '../program'
 import { currentStreak, longestStreak } from '../stats'
@@ -38,9 +39,7 @@ describe('getTodayPlan', () => {
   it('does not repeat speaking prompts within a phase-1 month', () => {
     const ids = new Set<string>()
     for (let d = 0; d < 28; d++) {
-      const day = new Date(2026, 0, 1 + d)
-      const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
-      ids.add(getTodayPlan(getProgramPosition('2026-01-01', key)!, settings).speaking.id)
+      ids.add(getTodayPlan(at('2026-01-01', toDateKey(new Date(2026, 0, 1 + d))), settings).speaking.id)
     }
     expect(ids.size).toBe(28)
   })
