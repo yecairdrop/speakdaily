@@ -39,6 +39,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const markTask = useCallback((dateKey: string, task: TaskKind) => {
+    setProgress((prev) => {
+      const day = prev[dateKey] ?? { seconds: 0, recordings: 0, tasks: [] }
+      if (day.tasks.includes(task)) return prev
+      return { ...prev, [dateKey]: { ...day, tasks: [...day.tasks, task] } }
+    })
+  }, [])
+
   const rebuildProgress = useCallback((metas: RecordingMeta[]) => {
     setProgress((prev) => {
       const next: ProgressLog = {}
@@ -65,8 +73,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<AppState>(
-    () => ({ settings, updateSettings, progress, logRecording, rebuildProgress, resetAll }),
-    [settings, updateSettings, progress, logRecording, rebuildProgress, resetAll],
+    () => ({ settings, updateSettings, progress, logRecording, markTask, rebuildProgress, resetAll }),
+    [settings, updateSettings, progress, logRecording, markTask, rebuildProgress, resetAll],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

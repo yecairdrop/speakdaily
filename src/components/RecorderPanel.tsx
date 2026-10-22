@@ -25,6 +25,8 @@ interface Props {
   /** Shadowing: compare transcript with this passage instead of showing the normal analysis. */
   referenceText?: string
   allowVideo?: boolean
+  /** Initial state of the "Camera on" toggle. */
+  defaultVideo?: boolean
   /** Extra content shown while recording (e.g. STAR guide). */
   guide?: ReactNode
   /** Rendered under the result (e.g. "Next question"). */
@@ -46,6 +48,7 @@ export function RecorderPanel({
   sessionId,
   referenceText,
   allowVideo = false,
+  defaultVideo = false,
   guide,
   resultActions,
   showResult = true,
@@ -58,7 +61,7 @@ export function RecorderPanel({
   const [phase, setPhase] = useState<PanelPhase>('ready')
   const [limit, setLimit] = useState(defaultSeconds)
   const [elapsed, setElapsed] = useState(0)
-  const [useVideo, setUseVideo] = useState(false)
+  const [useVideo, setUseVideo] = useState(defaultVideo)
   const [result, setResult] = useState<Recording | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [attempts, setAttempts] = useState(0)

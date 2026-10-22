@@ -8,6 +8,8 @@ export interface AppState {
   progress: ProgressLog
   /** Register a saved recording in the daily activity log. */
   logRecording: (dateKey: string, seconds: number, task?: TaskKind) => void
+  /** Tick a daily task without adding a recording (e.g. a finished mock interview). */
+  markTask: (dateKey: string, task: TaskKind) => void
   /** Recompute seconds/counts from the recordings that still exist (after deletes). */
   rebuildProgress: (metas: RecordingMeta[]) => void
   resetAll: () => void
