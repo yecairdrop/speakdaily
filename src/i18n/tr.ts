@@ -392,7 +392,8 @@ export const tr = {
     about: 'Bu metin ne anlatıyor?',
     speed: (r: string) => `Hız: ${r}×`,
     voice: 'Ses',
-    defaultVoice: 'Varsayılan İngilizce ses',
+    defaultVoice: 'Otomatik (en doğal ses)',
+    voiceHint: 'Ses kötü ya da robotik geliyorsa listeden başka bir ses seç — en iyileri en üstte (ör. Google US English, Samantha).',
     steps: [
       {
         label: 'Dinle',

@@ -149,6 +149,7 @@ export default function ShadowingPage() {
                 </option>
               ))}
             </select>
+            <span className="hint">{t.shadowing.voiceHint}</span>
           </div>
         </div>
       </section>

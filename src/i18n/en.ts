@@ -389,7 +389,8 @@ export const en: Messages = {
     about: 'What is this passage about?',
     speed: (r) => `Speed: ${r}×`,
     voice: 'Voice',
-    defaultVoice: 'Default English voice',
+    defaultVoice: 'Automatic (most natural voice)',
+    voiceHint: 'If the voice sounds bad or robotic, pick another one — the best are listed first (e.g. Google US English, Samantha).',
     steps: [
       { label: 'Listen', help: 'Just listen and read along. Notice stress, linking and where the speaker pauses.' },
       {

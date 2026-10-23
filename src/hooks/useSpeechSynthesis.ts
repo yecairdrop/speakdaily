@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { rankEnglishVoices } from '../lib/voices'
 
 export interface SpeakOptions {
   rate: number
@@ -18,8 +19,9 @@ export interface SpeechSynthesisState {
 
 const synth: SpeechSynthesis | null = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null
 
+/** English voices, novelty voices removed, most natural first (see lib/voices.ts). */
 function englishVoices(): SpeechSynthesisVoice[] {
-  return (synth?.getVoices() ?? []).filter((v) => v.lang.toLowerCase().startsWith('en'))
+  return rankEnglishVoices(synth?.getVoices() ?? [])
 }
 
 /** Splits text into sentences with their offsets; short utterances avoid Chrome's ~15s cut-off bug. */
@@ -63,10 +65,9 @@ export function useSpeechSynthesis(): SpeechSynthesisState {
     if (!synth) return false
     const run = ++runRef.current
     synth.cancel()
-    const voice =
-      englishVoices().find((v) => v.voiceURI === opts.voiceURI) ??
-      englishVoices().find((v) => v.lang === 'en-US') ??
-      null
+    // The user's chosen voice, otherwise the best-ranked English voice (never a novelty voice).
+    const ranked = englishVoices()
+    const voice = ranked.find((v) => v.voiceURI === opts.voiceURI) ?? ranked[0] ?? null
     setSpeaking(true)
     for (const part of sentences(text)) {
       if (runRef.current !== run) return false
