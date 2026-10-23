@@ -1,8 +1,10 @@
-import { Check, Layers, ListChecks, Map as MapIcon, Rocket, Sprout } from 'lucide-react'
+import { Check, GraduationCap, Layers, ListChecks, Map as MapIcon, Rocket, Sprout } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Onboarding } from '../components/Onboarding'
 import { Disclosure } from '../components/ui/Disclosure'
 import { PageHeader } from '../components/ui/PageHeader'
 import { PHASES, WEEKS } from '../data/program'
+import { UNITS_BY_ID } from '../data/units'
 import { useApp } from '../hooks/useApp'
 import { useI18n } from '../hooks/useI18n'
 import { addDays } from '../lib/dates'
@@ -103,6 +105,12 @@ export default function RoadmapPage() {
                       {week.goal}
                     </p>
                     <div className="chips">
+                      {UNITS_BY_ID.get(w.week) && (
+                        <Link to={`/units/${w.week}`} className="chip chip-suggest" style={{ padding: '3px 10px', fontSize: '0.78rem', textDecoration: 'none' }}>
+                          <GraduationCap size={13} aria-hidden />
+                          {t.roadmap.unitChip(w.week, UNITS_BY_ID.get(w.week)?.title[settings.language] ?? '')}
+                        </Link>
+                      )}
                       {week.focus.map((f) => (
                         <span key={f} className="chip xs" style={{ padding: '3px 10px', fontSize: '0.78rem' }}>
                           {f}

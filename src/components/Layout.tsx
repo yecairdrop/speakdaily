@@ -2,6 +2,7 @@ import {
   Archive,
   Briefcase,
   CircleHelp,
+  GraduationCap,
   Headphones,
   House,
   Library,
@@ -30,6 +31,7 @@ interface NavItem {
 
 const MAIN: NavItem[] = [
   { to: '/', icon: House, label: (t) => t.nav.today, end: true },
+  { to: '/units', icon: GraduationCap, label: (t) => t.nav.units },
   { to: '/roadmap', icon: MapIcon, label: (t) => t.nav.roadmap },
   { to: '/shadowing', icon: Headphones, label: (t) => t.nav.shadowing },
   { to: '/questions', icon: Library, label: (t) => t.nav.questions },
@@ -41,13 +43,14 @@ const MAIN: NavItem[] = [
 /** Phone bottom bar shows the five daily destinations (short labels); the rest live in the "More" menu. */
 const TABBAR: NavItem[] = [
   { to: '/', icon: House, label: (t) => t.tabs.today, end: true },
-  { to: '/roadmap', icon: MapIcon, label: (t) => t.tabs.roadmap },
+  { to: '/units', icon: GraduationCap, label: (t) => t.tabs.units },
   { to: '/shadowing', icon: Headphones, label: (t) => t.tabs.shadowing },
   { to: '/questions', icon: Library, label: (t) => t.tabs.questions },
   { to: '/archive', icon: Archive, label: (t) => t.tabs.archive },
 ]
 
 const MORE: NavItem[] = [
+  { to: '/roadmap', icon: MapIcon, label: (t) => t.nav.roadmap },
   { to: '/mock', icon: Briefcase, label: (t) => t.nav.mock },
   { to: '/progress', icon: TrendingUp, label: (t) => t.nav.progress },
   { to: '/settings', icon: Settings, label: (t) => t.nav.settings },

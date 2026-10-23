@@ -6,10 +6,13 @@ import HelpPage from './pages/HelpPage'
 import MockPage from './pages/MockPage'
 import QuestionsPage from './pages/QuestionsPage'
 import RecordPage from './pages/RecordPage'
+import ReviewPage from './pages/ReviewPage'
 import RoadmapPage from './pages/RoadmapPage'
 import SettingsPage from './pages/SettingsPage'
 import ShadowingPage from './pages/ShadowingPage'
 import TodayPage from './pages/TodayPage'
+import UnitPage from './pages/UnitPage'
+import UnitsPage from './pages/UnitsPage'
 import { AppProvider } from './state/AppProvider'
 
 // Charts pull in recharts; load them only when the Progress page is opened.
@@ -23,6 +26,9 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<TodayPage />} />
+            <Route path="units" element={<UnitsPage />} />
+            <Route path="units/:id" element={<UnitPage />} />
+            <Route path="review" element={<ReviewPage />} />
             <Route path="roadmap" element={<RoadmapPage />} />
             <Route path="record" element={<RecordPage />} />
             <Route path="shadowing" element={<ShadowingPage />} />

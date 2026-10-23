@@ -5,6 +5,8 @@ import {
   Flame,
   Headphones,
   ListChecks,
+  GraduationCap,
+  RotateCcw as ReviewIcon,
   Mic,
   PartyPopper,
   RotateCcw,
@@ -23,6 +25,8 @@ import { useI18n } from '../hooks/useI18n'
 import { addDays, toDateKey } from '../lib/dates'
 import { getProgramPosition, getTodayPlan } from '../lib/program'
 import { currentStreak, formatMinutes, totalSeconds } from '../lib/stats'
+import { currentUnit, isUnitComplete, nextStep } from '../lib/vocab/plan'
+import { dueItemIds } from '../lib/vocab/srs'
 import type { Messages } from '../i18n'
 import type { TaskKind } from '../types'
 
@@ -71,7 +75,7 @@ function TaskCard({ icon: Icon, tone = '', title, done, doneLabel, badge, childr
 }
 
 export default function TodayPage() {
-  const { settings, progress } = useApp()
+  const { settings, progress, vocab } = useApp()
   const { t } = useI18n()
   const [offset, setOffset] = useState(0)
   const [hour] = useState(() => new Date().getHours())
@@ -98,7 +102,18 @@ export default function TodayPage() {
   })
   const weekCount = weekDays.filter((d) => d.done).length
 
-  const tasks: TaskKind[] = ['shadowing', 'speaking', ...(plan.star ? (['star'] as const) : []), ...(plan.mockInterview ? (['mock'] as const) : [])]
+  const dueCount = dueItemIds(vocab, today).length
+  const unit = currentUnit(vocab)
+  const unitStep = nextStep(vocab, unit.id)
+  const showReview = dueCount > 0 || isDone('review')
+  const tasks: TaskKind[] = [
+    ...(showReview ? (['review'] as const) : []),
+    'unit',
+    'shadowing',
+    'speaking',
+    ...(plan.star ? (['star'] as const) : []),
+    ...(plan.mockInterview ? (['mock'] as const) : []),
+  ]
   const doneCount = tasks.filter(isDone).length
   const allDone = doneCount === tasks.length
 
@@ -213,6 +228,33 @@ export default function TodayPage() {
             </div>
           </div>
         )}
+
+        {showReview && (
+          <TaskCard
+            icon={ReviewIcon}
+            tone="sun"
+            title={t.today.taskReviewTitle}
+            done={isDone('review') && dueCount === 0}
+            doneLabel={t.common.done}
+            to="/review"
+            actionLabel={t.today.startTask}
+          >
+            <p className="small muted">{dueCount > 0 ? t.today.taskReviewDesc(dueCount) : t.review.finished}</p>
+          </TaskCard>
+        )}
+
+        <TaskCard
+          icon={GraduationCap}
+          title={t.today.taskUnitTitle(unit.id, unit.title[settings.language])}
+          done={isDone('unit')}
+          doneLabel={t.today.doneToday}
+          to={`/units/${unit.id}`}
+          actionLabel={isUnitComplete(vocab, unit.id) ? t.units.open : isDone('unit') ? t.units.continue : t.today.startTask}
+        >
+          <p className="small muted">
+            {unitStep ? t.today.taskUnitDesc(t.units.steps[unitStep]) : t.today.taskUnitDone} · {unit.goal[settings.language]}
+          </p>
+        </TaskCard>
 
         <TaskCard
           icon={Headphones}

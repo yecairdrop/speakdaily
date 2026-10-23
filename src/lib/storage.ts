@@ -1,7 +1,8 @@
-import type { Settings, TaskKind } from '../types'
+import type { Settings, TaskKind, VocabProgress } from '../types'
 
 const SETTINGS_KEY = 'speakdaily.settings.v1'
 const PROGRESS_KEY = 'speakdaily.progress.v1'
+const VOCAB_KEY = 'speakdaily.vocab.v1'
 
 export const DEFAULT_FILLERS = [
   'um',
@@ -70,7 +71,17 @@ export function saveProgress(progress: ProgressLog): void {
   writeJson(PROGRESS_KEY, progress)
 }
 
+export function loadVocab(): VocabProgress {
+  const stored = readJson<VocabProgress>(VOCAB_KEY)
+  return { items: stored?.items ?? {}, units: stored?.units ?? {} }
+}
+
+export function saveVocab(vocab: VocabProgress): void {
+  writeJson(VOCAB_KEY, vocab)
+}
+
 export function clearLocalData(): void {
   localStorage.removeItem(SETTINGS_KEY)
   localStorage.removeItem(PROGRESS_KEY)
+  localStorage.removeItem(VOCAB_KEY)
 }

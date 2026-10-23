@@ -12,6 +12,7 @@ import { useApp } from '../hooks/useApp'
 import { useI18n } from '../hooks/useI18n'
 import { listRecordingsForPrompt } from '../lib/db'
 import { getProgramPosition, randomItem } from '../lib/program'
+import { currentUnit, speakingTargets } from '../lib/vocab/plan'
 import type { Recording, TaskKind } from '../types'
 
 const TASKS: readonly TaskKind[] = ['speaking', 'star', 'shadowing', 'mock']
@@ -23,13 +24,15 @@ function parseTask(value: string | null): TaskKind | undefined {
 export default function RecordPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const { settings } = useApp()
+  const { settings, vocab } = useApp()
   const { t } = useI18n()
   const prompt = PROMPTS_BY_ID.get(params.get('prompt') ?? '')
   const task = parseTask(params.get('task'))
   const secondsParam = Number(params.get('seconds'))
   const pos = getProgramPosition(settings.startDate)
   const [history, setHistory] = useState<Recording[]>([])
+  // Picked once per visit so the targets don't change while you record.
+  const [targets] = useState(() => speakingTargets(vocab, currentUnit(vocab)))
 
   const loadHistory = useCallback(() => {
     if (!prompt) return
@@ -123,6 +126,7 @@ export default function RecordPage() {
           defaultSeconds={seconds}
           allowVideo={allowVideo}
           guide={prompt.category === 'star' ? <StarGuide /> : undefined}
+          targets={targets}
           onSaved={loadHistory}
         />
       </section>

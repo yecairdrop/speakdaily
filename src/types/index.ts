@@ -23,6 +23,56 @@ export interface Passage {
 
 export type ThemeMode = 'dark' | 'light'
 
+/* ---------- Vocabulary units ---------- */
+
+export type VocabKind = 'word' | 'phrase' | 'connector'
+
+/** A word or chunk to learn. English stays English; Turkish is the learning aid. */
+export interface VocabItem {
+  id: string
+  unitId: number
+  /** Base form shown to the learner, e.g. "take responsibility". */
+  term: string
+  /** Other forms to recognise in speech / sentences, e.g. irregular past "took responsibility". */
+  alt?: string[]
+  tr: string
+  /** English example sentence that contains the term (or one of `alt`). */
+  example: string
+  exampleTr: string
+  kind: VocabKind
+}
+
+export interface Unit {
+  id: number
+  title: { tr: string; en: string }
+  goal: { tr: string; en: string }
+  items: VocabItem[]
+  /** Short English model text that uses the unit's items (comprehensible input). */
+  modelText: string
+  modelSummaryTr: string
+  /** Question bank prompt used for the unit's speaking step. */
+  promptId: string
+}
+
+export type UnitStep = 'learn' | 'listen' | 'practice' | 'speak'
+
+/** Spaced-repetition state of one item (Leitner box 1..5). */
+export interface ItemProgress {
+  box: number
+  /** Date key (YYYY-MM-DD) when the item is due for review. */
+  due: string
+  correct: number
+  wrong: number
+  /** Times the item was detected in your own recorded speech. */
+  used: number
+  lastUsed?: string
+}
+
+export interface VocabProgress {
+  items: Record<string, ItemProgress>
+  units: Record<string, UnitStep[]>
+}
+
 export type Language = 'tr' | 'en'
 
 export interface Settings {
@@ -43,7 +93,7 @@ export interface Settings {
 export type RecordingKind = 'speaking' | 'shadowing' | 'mock'
 
 /** Daily task slots shown on the Today screen. */
-export type TaskKind = 'shadowing' | 'speaking' | 'star' | 'mock'
+export type TaskKind = 'review' | 'unit' | 'shadowing' | 'speaking' | 'star' | 'mock'
 
 export interface FillerHit {
   word: string

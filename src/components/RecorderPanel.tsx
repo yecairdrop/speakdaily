@@ -8,13 +8,16 @@ import { analyzeAnswer } from '../lib/analysis'
 import { formatDuration, toDateKey } from '../lib/dates'
 import { newId, saveRecording } from '../lib/db'
 import { compareToReference } from '../lib/similarity'
-import type { PromptCategory, Recording, RecordingKind, TaskKind } from '../types'
+import { ALL_ITEMS } from '../data/units'
+import { findUsedItems } from '../lib/vocab/match'
+import type { PromptCategory, Recording, RecordingKind, TaskKind, VocabItem } from '../types'
 import { AnalysisView, StatGrid } from './AnalysisView'
 import { MediaPlayback } from './MediaPlayback'
 import { SimilarityView } from './SimilarityView'
 import { Confetti } from './ui/Confetti'
 import { Skeleton } from './ui/Skeleton'
 import { Switch } from './ui/Switch'
+import { TargetsPanel, TargetsResult } from './vocab/Targets'
 
 const LIMIT_OPTIONS = [30, 60, 90, 120, 180, 240]
 const MIN_SAVE_SECONDS = 2
@@ -40,6 +43,8 @@ interface Props {
   resultActions?: (rec: Recording) => ReactNode
   /** Show the full analysis after stopping (mock interviews show a summary at the end instead). */
   showResult?: boolean
+  /** Vocabulary chunks to try to use; shown before recording and checked against the transcript after. */
+  targets?: readonly VocabItem[]
   onSaved?: (rec: Recording) => void
 }
 
@@ -59,9 +64,10 @@ export function RecorderPanel({
   guide,
   resultActions,
   showResult = true,
+  targets,
   onSaved,
 }: Props) {
-  const { settings, progress, logRecording } = useApp()
+  const { settings, progress, logRecording, vocab, recordSpeechUse } = useApp()
   const { t } = useI18n()
   const recorder = useRecorder()
   const speech = useSpeechRecognition('en-US')
@@ -143,6 +149,12 @@ export function RecorderPanel({
       const taskWasDone = !task || (progress[rec.dateKey]?.tasks.includes(task) ?? false)
       await saveRecording(rec)
       logRecording(rec.dateKey, rec.durationSec, task)
+      // Using a target or an already-studied chunk in your own speech moves it up in spaced repetition.
+      const used = findUsedItems(
+        capture.transcript,
+        ALL_ITEMS.filter((i) => vocab.items[i.id] !== undefined || targets?.some((tg) => tg.id === i.id)),
+      )
+      recordSpeechUse(used.map((i) => i.id))
       setResult(rec)
       setAttempts((a) => a + 1)
       setCelebrate(!taskWasDone)
@@ -152,7 +164,7 @@ export function RecorderPanel({
       setMessage(t.recorder.saveFailed(err instanceof Error ? err.message : String(err)))
       setPhase('ready')
     }
-  }, [recorder, speech, t, promptText, settings.fillerWords, kind, promptId, category, referenceText, sessionId, task, progress, logRecording, onSaved])
+  }, [recorder, speech, t, promptText, settings.fillerWords, kind, promptId, category, referenceText, sessionId, task, progress, logRecording, vocab, targets, recordSpeechUse, onSaved])
 
   // Countdown: auto-stop when the time limit is reached.
   const stopRef = useRef(handleStop)
@@ -222,6 +234,7 @@ export function RecorderPanel({
       {phase !== 'done' && (
         <div className="stage">
           {guide}
+          {targets && targets.length > 0 && <TargetsPanel targets={targets} />}
 
           {phase === 'ready' && (
             <div className="limit-picker" role="group" aria-label={t.recorder.timeLimit}>
@@ -346,6 +359,7 @@ export function RecorderPanel({
             </div>
           </div>
           <MediaPlayback blob={result.audio} video={result.hasVideo} />
+          {showResult && targets && targets.length > 0 && <TargetsResult targets={targets} transcript={result.transcript} />}
           {showResult &&
             (referenceText ? (
               <>

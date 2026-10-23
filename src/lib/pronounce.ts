@@ -5,11 +5,20 @@ export function cleanWord(word: string): string {
   return word.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
 }
 
+interface VoiceOpts {
+  rate: number
+  voiceURI: string | null
+}
+
 /** Speaks a single word with the user's (or the most natural) English voice, slightly slowed down. */
-export function pronounceWord(word: string, opts: { rate: number; voiceURI: string | null }): void {
+export function pronounceWord(word: string, opts: VoiceOpts): void {
+  speakText(cleanWord(word), opts, 0.85)
+}
+
+/** Speaks a short English text (a chunk or an example sentence), capped at `maxRate` for clarity. */
+export function speakText(text: string, opts: VoiceOpts, maxRate = 0.95): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-  const text = cleanWord(word)
-  if (!text) return
+  if (!text.trim()) return
   const synth = window.speechSynthesis
   synth.cancel()
   const voices = rankEnglishVoices(synth.getVoices())
@@ -17,6 +26,6 @@ export function pronounceWord(word: string, opts: { rate: number; voiceURI: stri
   const u = new SpeechSynthesisUtterance(text)
   u.lang = voice?.lang ?? 'en-US'
   if (voice) u.voice = voice
-  u.rate = Math.min(opts.rate, 0.85)
+  u.rate = Math.min(opts.rate, maxRate)
   synth.speak(u)
 }

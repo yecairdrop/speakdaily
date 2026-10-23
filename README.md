@@ -42,6 +42,17 @@ The interface is in **Turkish by default** (switchable to English); the practice
   - a Turkish **meaning** next to every connector phrase
 - A **"Nasıl çalışır?"** page explains the program, the daily routine, each screen and the key terms (WPM, STAR, streak, shadowing).
 
+### 📘 Vocabulary units (learn → listen → practise → speak)
+- **12 units, one per week, 180 chunks.** Units progress from A2/B1 ("major in", "in my free time") to B2 interview language ("take responsibility", "a good fit for this role"). Each unit has 15 words, collocations and connectors, each with a Turkish meaning, an example sentence and its Turkish translation. All 14 tracked connectors are spread across the units.
+- **The method:**
+  1. **Learn:** cards for each chunk, with audio.
+  2. **Listen:** a short model text that uses the chunks. Hover any word to hear it.
+  3. **Practise:** 30 retrieval questions. You first recognise the meaning (or listen and pick), then choose the right chunk to fill a gap in a sentence. Mistakes come back at the end.
+  4. **Speak:** a recorded answer with target chunks. The transcript is checked for which ones you actually used.
+- **Spaced repetition** uses Leitner boxes with reviews after 1, 3, 7, 14 and 30 days. Questions get harder as a chunk climbs the boxes: recognise → choose in context → **type it from the Turkish**, with tolerance for small typos.
+- **The "use it" loop:** every speaking task shows a few target chunks from your current unit. Chunks you say in your own speech are detected, including inflected forms like "took responsibility" or "applying for", and promoted in the review schedule.
+- **Today** starts with *Vocabulary review* and *your current unit*, followed by shadowing and speaking.
+
 ### 📅 12-week program and roadmap
 - Set a start date once; the app works out your current **week, day and phase**.
 - Every week has a goal and focus points, and each phase has its own daily routine checklist.
@@ -164,19 +175,20 @@ Routing uses `HashRouter`, so deep links work on GitHub Pages without a 404 fall
 src/
   components/   RecorderPanel, AnalysisView, HighlightedTranscript, ComparePanel, MockSummary, …
     ui/         ProgressRing, Confetti, EmptyState, Skeleton, Switch, Disclosure, PageHeader
-  data/         prompts.ts (124) + promptHintsTr.ts, passages.ts (32) + passageSummariesTr.ts,
+  data/         units.ts (12 units × 15 chunks), prompts.ts (124) + promptHintsTr.ts, passages.ts (32) + passageSummariesTr.ts,
                 connectorsTr.ts, program.ts (structure only — texts live in i18n)
   i18n/         tr.ts (default, source of truth), en.ts, locale parity tests
   hooks/        useRecorder, useSpeechRecognition, useSpeechSynthesis, useRecordings, useI18n, useApp, …
   lib/
     analysis/   Analyzer interface + local rule-based analyzer (swap in an LLM later)
+    vocab/      chunk matching (inflections), Leitner spaced repetition, exercise generation, typed-answer check
     db.ts       IndexedDB (idb): recordings + mock sessions
     storage.ts  localStorage: settings + daily progress log
     program.ts  week/phase calculation, deterministic daily plan
     similarity.ts  LCS word alignment for shadowing
     speech.ts   typed, auto-restarting SpeechRecognition wrapper
     …
-  pages/        Today, Roadmap, Record, Shadowing, Questions, Mock, Archive, Progress, Settings, Help
+  pages/        Today, Units, Unit, Review, Roadmap, Record, Shadowing, Questions, Mock, Archive, Progress, Settings, Help
   state/        AppProvider (settings + progress context)
 ```
 

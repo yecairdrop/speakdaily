@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 import type { ProgressLog } from '../lib/storage'
-import type { RecordingMeta, Settings, TaskKind } from '../types'
+import type { RecordingMeta, Settings, TaskKind, UnitStep, VocabProgress } from '../types'
 
 export interface AppState {
   settings: Settings
@@ -13,6 +13,13 @@ export interface AppState {
   /** Recompute seconds/counts from the recordings that still exist (after deletes). */
   rebuildProgress: (metas: RecordingMeta[]) => void
   resetAll: () => void
+  /** Vocabulary units + spaced repetition. */
+  vocab: VocabProgress
+  /** One result per item (first attempt of a practice/review session). */
+  recordAnswers: (results: { itemId: string; correct: boolean }[]) => void
+  markUnitStep: (unitId: number, step: UnitStep) => void
+  /** Items detected in your own recorded speech. */
+  recordSpeechUse: (itemIds: string[]) => void
 }
 
 export const AppContext = createContext<AppState | null>(null)

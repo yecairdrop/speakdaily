@@ -4,6 +4,7 @@ import {
   BookOpenText,
   Briefcase,
   CircleHelp,
+  GraduationCap,
   Headphones,
   House,
   Layers,
@@ -26,6 +27,7 @@ const PHASE_ICONS = [Sprout, Layers, Rocket]
 
 const SCREENS: { key: keyof Messages['help']['screens']; to: string; icon: LucideIcon; nav: keyof Messages['nav'] }[] = [
   { key: 'today', to: '/', icon: House, nav: 'today' },
+  { key: 'units', to: '/units', icon: GraduationCap, nav: 'units' },
   { key: 'roadmap', to: '/roadmap', icon: MapIcon, nav: 'roadmap' },
   { key: 'shadowing', to: '/shadowing', icon: Headphones, nav: 'shadowing' },
   { key: 'questions', to: '/questions', icon: Library, nav: 'questions' },

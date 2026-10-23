@@ -1,4 +1,4 @@
-import { CalendarDays, ChartLine, Flame, Gauge, MessageCircleWarning, Mic, Table, Timer, TrendingUp } from 'lucide-react'
+import { BookOpenCheck, CalendarDays, ChartLine, Flame, Gauge, MessageCircleWarning, Mic, Table, Timer, TrendingUp } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -25,6 +25,7 @@ import { useThemeColors, type ThemeColors } from '../hooks/useThemeColors'
 import { toDateKey } from '../lib/dates'
 import { dailySpeakingStats, heatmapCells, weeklyMinutes } from '../lib/progressData'
 import { currentStreak, formatMinutes, longestStreak, totalSeconds } from '../lib/stats'
+import { totalStats } from '../lib/vocab/plan'
 
 function axisProps(c: ThemeColors) {
   return {
@@ -52,7 +53,7 @@ function tooltipProps(c: ThemeColors) {
 }
 
 export default function ProgressPage() {
-  const { settings, progress } = useApp()
+  const { settings, progress, vocab } = useApp()
   const { t, formatDate } = useI18n()
   const { recordings, loading } = useRecordings()
   const c = useThemeColors()
@@ -90,6 +91,13 @@ export default function ProgressPage() {
         <StatCard icon={Timer} tone="mint" label={t.progress.minutesSpoken} value={formatMinutes(totalSeconds(progress))} sub={t.progress.recordings(recordings.length)} />
         <StatCard icon={Gauge} label={t.progress.wpm} value={avgWpm(last)} sub={t.progress.recentVsFirst(avgWpm(first))} />
         <StatCard icon={MessageCircleWarning} tone="sun" label={t.progress.fillersPerMin} value={avgFpm(last)} sub={t.progress.recentVsFirst(avgFpm(first))} />
+        <StatCard
+          icon={BookOpenCheck}
+          tone="mint"
+          label={t.progress.wordsLearned}
+          value={`${totalStats(vocab).learned}/180`}
+          sub={t.progress.wordsUsed(totalStats(vocab).usedInSpeech)}
+        />
       </div>
 
       <section className="card">
