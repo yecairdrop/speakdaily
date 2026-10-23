@@ -7,25 +7,40 @@ No backend, no account. Everything (including audio) stays in your browser.
 
 > Built with React 19, Vite, TypeScript (strict), IndexedDB, MediaRecorder and the Web Speech API.
 
-**Live demo:** `https://<your-github-username>.github.io/speakdaily/`
+**Live demo:** https://yecairdrop.github.io/speakdaily/
 
 ---
 
 ## Screenshots
 
-| Today | Recorder + analysis | Progress |
-| --- | --- | --- |
-| _`docs/screenshots/today.png`_ | _`docs/screenshots/recorder.png`_ | _`docs/screenshots/progress.png`_ |
+The interface is in **Turkish by default** (switchable to English); the practice content stays in English.
 
-| Shadowing | Compare attempts | Mock interview |
+| | Dark (default) | Light |
 | --- | --- | --- |
-| _`docs/screenshots/shadowing.png`_ | _`docs/screenshots/compare.png`_ | _`docs/screenshots/mock.png`_ |
+| **Today** | ![Today, dark](docs/screenshots/today-dark.png) | ![Today, light](docs/screenshots/today-light.png) |
+| **Recorder result** | ![Recorder result, dark](docs/screenshots/recorder-dark.png) | ![Recorder result, light](docs/screenshots/recorder-light.png) |
+| **Roadmap** | ![Roadmap, dark](docs/screenshots/roadmap-dark.png) | ![Roadmap, light](docs/screenshots/roadmap-light.png) |
+| **Archive** | ![Archive, dark](docs/screenshots/archive-dark.png) | ![Archive, light](docs/screenshots/archive-light.png) |
 
-<!-- Replace the placeholders with real screenshots: ![Today](docs/screenshots/today.png) -->
+<details>
+<summary>Recorder before you start</summary>
+
+![Recorder, ready](docs/screenshots/recorder-ready-dark.png)
+
+</details>
 
 ---
 
 ## Features
+
+### 🇹🇷 Turkish interface, English practice
+- The whole UI is in **Turkish** by default (informal *sen* form), with an **EN/TR toggle** in the header and in Settings.
+- The things you read aloud or answer stay in **English**: prompts, STAR questions, shadowing passages and the filler/connector word lists.
+- Learning aids in Turkish:
+  - a one-line **`hintTr`** under every prompt, explaining what the question asks and what to mention (collapsible, with a global "show Turkish hints" switch)
+  - a Turkish **summary** before each shadowing passage
+  - a Turkish **meaning** next to every connector phrase
+- A **"Nasıl çalışır?"** page explains the program, the daily routine, each screen and the key terms (WPM, STAR, streak, shadowing).
 
 ### 📅 12-week program and roadmap
 - Set a start date once; the app works out your current **week, day and phase**.
@@ -71,7 +86,7 @@ No backend, no account. Everything (including audio) stays in your browser.
 - Charts (Recharts): WPM over time with a target band, fillers per minute over time, minutes per week, and a **12-week practice heatmap**.
 
 ### ⚙️ Settings
-- Start date, time-limit override, editable filler list, recognition language locked to `en-US`, dark/light theme (dark by default).
+- Start date, time-limit override, editable filler list, recognition language locked to `en-US`, interface language (TR/EN), Turkish hints on or off, dark/light theme (dark by default).
 - Shows storage usage and lets you request **persistent storage**, so the browser won't evict months of recordings.
 - **Clear all data**, with a confirmation step.
 
@@ -133,8 +148,11 @@ Routing uses `HashRouter`, so deep links work on GitHub Pages without a 404 fall
 ```
 src/
   components/   RecorderPanel, AnalysisView, HighlightedTranscript, ComparePanel, MockSummary, …
-  data/         prompts.ts (124), passages.ts (32), program.ts (phases + weeks)
-  hooks/        useRecorder, useSpeechRecognition, useSpeechSynthesis, useRecordings, useApp, …
+    ui/         ProgressRing, Confetti, EmptyState, Skeleton, Switch, Disclosure, PageHeader
+  data/         prompts.ts (124) + promptHintsTr.ts, passages.ts (32) + passageSummariesTr.ts,
+                connectorsTr.ts, program.ts (structure only — texts live in i18n)
+  i18n/         tr.ts (default, source of truth), en.ts, locale parity tests
+  hooks/        useRecorder, useSpeechRecognition, useSpeechSynthesis, useRecordings, useI18n, useApp, …
   lib/
     analysis/   Analyzer interface + local rule-based analyzer (swap in an LLM later)
     db.ts       IndexedDB (idb): recordings + mock sessions
@@ -143,9 +161,22 @@ src/
     similarity.ts  LCS word alignment for shadowing
     speech.ts   typed, auto-restarting SpeechRecognition wrapper
     …
-  pages/        Today, Roadmap, Record, Shadowing, Questions, Mock, Archive, Progress, Settings
+  pages/        Today, Roadmap, Record, Shadowing, Questions, Mock, Archive, Progress, Settings, Help
   state/        AppProvider (settings + progress context)
 ```
+
+### Internationalisation
+- `src/i18n/tr.ts` is the source of truth for the dictionary shape (`Messages`). `en.ts` is typed against it, so a missing or extra key is a **compile error**.
+- `src/i18n/__tests__/locales.test.ts` also checks at runtime that both locales have identical keys, array lengths and function arities, and that no string is empty.
+- Components read strings as typed properties (`t.today.tasksTitle`). Strings with parameters are functions (`t.today.weekDay(6, 2)`).
+- The analyzer returns **tip codes** (`{ id: 'longPause', value: 4.9 }`), not English text, so tips are translated when they're rendered. An LLM analyzer can still return free-text tips.
+
+### Design system
+- Everything is defined as CSS custom properties in `src/index.css`: a warm coral accent and a soft mint secondary, on a rich plum dark theme (the default) or a warm cream light theme. There are also spacing, radius, shadow and motion scales.
+- Every text/background pair was checked against **WCAG AA (≥ 4.5:1)** in both themes.
+- Nunito is self-hosted via `@fontsource-variable/nunito`, so there are no external font requests. Icons are [lucide-react](https://lucide.dev).
+- Motion includes a pulsing record button, a countdown ring, confetti when a daily task is completed, skeleton loaders and page transitions. All of it is turned off under `prefers-reduced-motion`.
+- It's responsive: on phones you get a bottom tab bar plus a "more" menu, and at medium widths the nav switches to icons only.
 
 ### Design notes
 - **The analyzer is pluggable.** `lib/analysis` exposes an `Analyzer` interface (`analyze(input) → Promise<AnalysisResult>`). The local rule-based analyzer is the default. An API-backed analyzer (e.g. Claude feedback on content, grammar and structure) can be added with `setAnalyzer()`. If it throws, `analyzeAnswer()` falls back to the local stats, so saving never breaks.
