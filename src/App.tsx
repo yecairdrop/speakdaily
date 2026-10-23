@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import ArchivePage from './pages/ArchivePage'
+import HelpPage from './pages/HelpPage'
 import MockPage from './pages/MockPage'
 import QuestionsPage from './pages/QuestionsPage'
 import RecordPage from './pages/RecordPage'
@@ -31,12 +32,13 @@ export default function App() {
             <Route
               path="progress"
               element={
-                <Suspense fallback={<p className="muted">Loading charts…</p>}>
+                <Suspense fallback={<div className="skeleton" style={{ height: 320, borderRadius: 26 }} aria-busy="true" />}>
                   <ProgressPage />
                 </Suspense>
               }
             />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="help" element={<HelpPage />} />
             <Route path="*" element={<TodayPage />} />
           </Route>
         </Routes>

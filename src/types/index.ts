@@ -23,6 +23,8 @@ export interface Passage {
 
 export type ThemeMode = 'dark' | 'light'
 
+export type Language = 'tr' | 'en'
+
 export interface Settings {
   /** ISO date (YYYY-MM-DD) of program day 1, or null before onboarding. */
   startDate: string | null
@@ -32,6 +34,10 @@ export interface Settings {
   theme: ThemeMode
   ttsRate: number
   ttsVoiceURI: string | null
+  /** UI language. Practice content (prompts, passages) always stays English. */
+  language: Language
+  /** Show the Turkish one-line hints under English prompts. */
+  showHintsTr: boolean
 }
 
 export type RecordingKind = 'speaking' | 'shadowing' | 'mock'
@@ -43,6 +49,25 @@ export interface FillerHit {
   word: string
   count: number
 }
+
+export type TipId =
+  | 'noSpeech'
+  | 'slow'
+  | 'fast'
+  | 'goodPace'
+  | 'manyFillers'
+  | 'fewFillers'
+  | 'longPause'
+  | 'moreConnectors'
+  | 'repetition'
+  | 'longSilences'
+
+export interface Tip {
+  id: TipId
+  value?: string | number
+}
+
+export type FeedbackItem = Tip | string
 
 /** Output of an analyzer. Kept serialisable so it can be stored and later produced by an API. */
 export interface AnalysisResult {
@@ -58,8 +83,8 @@ export interface AnalysisResult {
   uniqueWords: number
   /** unique words / total words, 0..1 */
   vocabularyVariety: number
-  /** Free-form feedback lines (empty for the local analyzer; reserved for an LLM analyzer). */
-  feedback: string[]
+  /** Tips: codes from the local analyzer (translated in the UI) or free text from e.g. an LLM analyzer. */
+  feedback: FeedbackItem[]
 }
 
 export interface Recording {

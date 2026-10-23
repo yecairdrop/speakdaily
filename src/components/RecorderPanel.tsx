@@ -1,5 +1,7 @@
+import { CircleAlert, Mic, PartyPopper, RotateCcw, Square, Video } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useApp } from '../hooks/useApp'
+import { useI18n } from '../hooks/useI18n'
 import { useRecorder } from '../hooks/useRecorder'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { analyzeAnswer } from '../lib/analysis'
@@ -10,9 +12,14 @@ import type { PromptCategory, Recording, RecordingKind, TaskKind } from '../type
 import { AnalysisView, StatGrid } from './AnalysisView'
 import { MediaPlayback } from './MediaPlayback'
 import { SimilarityView } from './SimilarityView'
+import { Confetti } from './ui/Confetti'
+import { Skeleton } from './ui/Skeleton'
+import { Switch } from './ui/Switch'
 
-const LIMIT_OPTIONS = [30, 45, 60, 90, 120, 150, 180, 240, 300]
+const LIMIT_OPTIONS = [30, 60, 90, 120, 180, 240]
 const MIN_SAVE_SECONDS = 2
+const RING_SIZE = 168
+const RING_STROKE = 8
 
 interface Props {
   promptText: string
@@ -54,7 +61,8 @@ export function RecorderPanel({
   showResult = true,
   onSaved,
 }: Props) {
-  const { settings, logRecording } = useApp()
+  const { settings, progress, logRecording } = useApp()
+  const { t } = useI18n()
   const recorder = useRecorder()
   const speech = useSpeechRecognition('en-US')
 
@@ -65,6 +73,7 @@ export function RecorderPanel({
   const [result, setResult] = useState<Recording | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [attempts, setAttempts] = useState(0)
+  const [celebrate, setCelebrate] = useState(false)
 
   const startedAtRef = useRef(0)
   const stoppingRef = useRef(false)
@@ -77,6 +86,7 @@ export function RecorderPanel({
   const handleStart = async () => {
     setMessage(null)
     setResult(null)
+    setCelebrate(false)
     speech.reset()
     const ok = await recorder.start({ video: allowVideo && useVideo })
     if (!ok) return
@@ -100,7 +110,7 @@ export function RecorderPanel({
       return
     }
     if (media.durationSec < MIN_SAVE_SECONDS) {
-      setMessage('That was too short to save. Try again and speak for a bit longer.')
+      setMessage(t.recorder.tooShort)
       setPhase('ready')
       return
     }
@@ -130,17 +140,19 @@ export function RecorderPanel({
         ...(sessionId ? { sessionId } : {}),
         ...(task ? { task } : {}),
       }
+      const taskWasDone = !task || (progress[rec.dateKey]?.tasks.includes(task) ?? false)
       await saveRecording(rec)
       logRecording(rec.dateKey, rec.durationSec, task)
       setResult(rec)
       setAttempts((a) => a + 1)
+      setCelebrate(!taskWasDone)
       setPhase('done')
       onSaved?.(rec)
     } catch (err) {
-      setMessage(`Could not save the recording: ${err instanceof Error ? err.message : String(err)}`)
+      setMessage(t.recorder.saveFailed(err instanceof Error ? err.message : String(err)))
       setPhase('ready')
     }
-  }, [recorder, speech, promptText, settings.fillerWords, kind, promptId, category, referenceText, sessionId, task, logRecording, onSaved])
+  }, [recorder, speech, t, promptText, settings.fillerWords, kind, promptId, category, referenceText, sessionId, task, progress, logRecording, onSaved])
 
   // Countdown: auto-stop when the time limit is reached.
   const stopRef = useRef(handleStop)
@@ -162,58 +174,75 @@ export function RecorderPanel({
     setResult(null)
     setElapsed(0)
     setMessage(null)
+    setCelebrate(false)
     speech.reset()
     setPhase('ready')
   }
 
   const remaining = Math.max(0, limit - elapsed)
-  const error = recorder.error ?? (speech.error && speech.error.kind !== 'unsupported' ? speech.error : null)
+  const recError = recorder.error
+  const speechError = speech.error && speech.error.kind !== 'unsupported' ? speech.error : null
+  const r = (RING_SIZE - RING_STROKE) / 2
+  const circumference = 2 * Math.PI * r
+  const fraction = phase === 'recording' || phase === 'saving' ? remaining / limit : 1
+  const limitOptions = Array.from(new Set([...LIMIT_OPTIONS, defaultSeconds])).sort((a, b) => a - b)
 
   return (
     <div className="stack">
-      {error && (
+      {recError && (
         <div className="alert alert-danger" role="alert">
-          <p>
-            <strong>{recorder.error?.kind === 'permission-denied' ? 'Microphone blocked' : 'Problem'}:</strong>{' '}
-            {error.message}
+          <CircleAlert size={20} aria-hidden />
+          <div>
+            <p className="bold" style={{ marginBottom: 2 }}>
+              {t.errors.recorder[recError.kind].title}
+            </p>
+            <p className="small">
+              {t.errors.recorder[recError.kind].text}
+              {recError.detail && <span className="subtle"> ({recError.detail})</span>}
+            </p>
+          </div>
+        </div>
+      )}
+      {speechError && (
+        <div className="alert alert-warning" role="alert">
+          <CircleAlert size={20} aria-hidden />
+          <p className="small">
+            {t.errors.speech[speechError.kind]}
+            {speechError.detail && <span className="subtle"> ({speechError.detail})</span>}
           </p>
         </div>
       )}
       {message && (
         <div className="alert alert-warning" role="status">
-          <p>{message}</p>
+          <CircleAlert size={20} aria-hidden />
+          <p className="small">{message}</p>
         </div>
       )}
 
-      {(phase === 'ready' || phase === 'recording' || phase === 'saving') && (
-        <>
+      {phase !== 'done' && (
+        <div className="stage">
           {guide}
+
           {phase === 'ready' && (
-            <div className="row" style={{ justifyContent: 'center' }}>
-              <label className="row small" htmlFor="limit">
-                Time limit
-                <select
-                  id="limit"
-                  className="input"
-                  style={{ width: 'auto' }}
-                  value={limit}
-                  onChange={(e) => setLimit(Number(e.target.value))}
+            <div className="limit-picker" role="group" aria-label={t.recorder.timeLimit}>
+              <span className="small bold muted">{t.recorder.timeLimit}</span>
+              {limitOptions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`chip${limit === s ? ' selected' : ''}`}
+                  onClick={() => setLimit(s)}
+                  aria-pressed={limit === s}
                 >
-                  {Array.from(new Set([...LIMIT_OPTIONS, defaultSeconds]))
-                    .sort((a, b) => a - b)
-                    .map((s) => (
-                      <option key={s} value={s}>
-                        {formatDuration(s)}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              {allowVideo && (
-                <label className="row small">
-                  <input type="checkbox" checked={useVideo} onChange={(e) => setUseVideo(e.target.checked)} />
-                  Camera on
-                </label>
-              )}
+                  {formatDuration(s)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {phase === 'ready' && allowVideo && (
+            <div style={{ width: '100%', maxWidth: 320 }}>
+              <Switch id="camera" label={t.recorder.camera} checked={useVideo} onChange={setUseVideo} />
             </div>
           )}
 
@@ -221,51 +250,100 @@ export function RecorderPanel({
             <video ref={videoRef} className="video-preview" autoPlay muted playsInline />
           )}
 
-          <div className="recorder-controls">
-            <div className={`timer${phase === 'recording' && remaining <= 10 ? ' low' : ''}`} aria-live="off">
-              {formatDuration(phase === 'ready' ? limit : remaining)}
-            </div>
+          <div className={`timer${phase === 'recording' && remaining <= 10 ? ' low' : ''}`} aria-hidden>
+            {formatDuration(phase === 'ready' ? limit : remaining)}
+          </div>
+
+          <div className="record-wrap">
+            <svg className="progress-ring" width={RING_SIZE} height={RING_SIZE} aria-hidden>
+              <circle className="ring-track" cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={r} fill="none" strokeWidth={RING_STROKE} />
+              <circle
+                className="ring-value"
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={r}
+                fill="none"
+                strokeWidth={RING_STROKE}
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={circumference * (1 - fraction)}
+              />
+            </svg>
             <button
               type="button"
               className={`record-btn${phase === 'recording' ? ' recording' : ''}`}
               onClick={phase === 'recording' ? () => void handleStop() : () => void handleStart()}
               disabled={phase === 'saving' || recorder.status === 'requesting' || !recorder.supported}
-              aria-label={phase === 'recording' ? 'Stop recording' : 'Start recording'}
+              aria-label={phase === 'recording' ? t.recorder.stopAria : t.recorder.startAria}
             >
-              {phase === 'recording' ? 'Stop' : phase === 'saving' ? '…' : recorder.status === 'requesting' ? '…' : 'Record'}
+              <span className="btn-inner">
+                {phase === 'recording' ? (
+                  <Square size={30} fill="currentColor" />
+                ) : allowVideo && useVideo ? (
+                  <Video size={34} />
+                ) : (
+                  <Mic size={36} />
+                )}
+                {phase === 'recording' ? t.recorder.stop : t.recorder.record}
+              </span>
             </button>
           </div>
-          {phase === 'recording' && (
-            <div className="progress-bar" aria-hidden>
-              <div style={{ width: `${Math.min(100, (elapsed / limit) * 100)}%` }} />
-            </div>
-          )}
-          {phase === 'saving' && <p className="muted small" style={{ textAlign: 'center' }}>Saving and analysing…</p>}
+
+          <div className="rec-status" aria-live="polite">
+            {phase === 'recording' && (
+              <>
+                <span className="rec-dot" aria-hidden />
+                {t.recorder.recording}
+              </>
+            )}
+            {phase === 'saving' && <span className="muted">{t.recorder.saving}</span>}
+          </div>
+          {phase === 'ready' && <p className="small muted m0" style={{ maxWidth: 420 }}>{t.recorder.readyHint}</p>}
 
           {(phase === 'recording' || phase === 'saving') && (
-            <div>
-              <h3 className="small muted">Live transcript</h3>
-              <div className="transcript">
+            <div style={{ width: '100%', textAlign: 'left' }}>
+              <h3 className="small muted" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {t.recorder.liveTranscript}
+              </h3>
+              <div className="transcript" lang="en">
                 {!speech.supported ? (
-                  <span className="placeholder">Live transcription isn&apos;t available in this browser (use Chrome).</span>
+                  <span className="placeholder">{t.recorder.noRecognition}</span>
                 ) : speech.finalTranscript || speech.interimTranscript ? (
                   <>
                     {speech.finalTranscript} <span className="interim">{speech.interimTranscript}</span>
                   </>
                 ) : (
-                  <span className="placeholder">Start speaking… your words will appear here.</span>
+                  <span className="placeholder">{t.recorder.startSpeaking}</span>
                 )}
               </div>
             </div>
           )}
-        </>
+
+          {phase === 'saving' && showResult && (
+            <div className="stat-grid" style={{ width: '100%' }} aria-hidden>
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} height={110} style={{ borderRadius: 18 }} />
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {phase === 'done' && result && (
-        <div className="stack">
-          <div className="row spread">
-            <h2 style={{ margin: 0 }}>{showResult ? 'Your result' : 'Answer saved ✓'}</h2>
-            {attempts > 1 && <span className="badge">Attempt {attempts}</span>}
+        <div className="stack-lg">
+          {celebrate && <Confetti />}
+          <div className="result-header">
+            <div className="celebrate-icon" aria-hidden>
+              <PartyPopper size={28} />
+            </div>
+            <div>
+              <h2>{showResult ? t.recorder.resultTitle : t.recorder.savedTitle}</h2>
+              <div className="row">
+                {showResult && <span className="small muted">{t.recorder.resultSub}</span>}
+                {celebrate && <span className="badge badge-success">{t.recorder.taskCompleted}</span>}
+                {attempts > 1 && <span className="badge">{t.recorder.attempt(attempts)}</span>}
+              </div>
+            </div>
           </div>
           <MediaPlayback blob={result.audio} video={result.hasVideo} />
           {showResult &&
@@ -280,7 +358,8 @@ export function RecorderPanel({
           <div className="row">
             {resultActions?.(result)}
             <button type="button" className="btn" onClick={retry}>
-              ↻ Record again
+              <RotateCcw size={16} aria-hidden />
+              {t.recorder.recordAgain}
             </button>
           </div>
         </div>

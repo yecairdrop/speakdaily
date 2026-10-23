@@ -11,7 +11,7 @@ export interface SpeechRecognitionState {
   listening: boolean
   finalTranscript: string
   interimTranscript: string
-  error: { kind: SpeechErrorKind; message: string } | null
+  error: { kind: SpeechErrorKind; detail?: string } | null
   start: () => void
   stop: () => Promise<SpeechCapture>
   reset: () => void
@@ -33,7 +33,7 @@ export function useSpeechRecognition(lang = 'en-US'): SpeechRecognitionState {
   const start = useCallback(() => {
     const Ctor = getSpeechRecognitionCtor()
     if (!Ctor) {
-      setError({ kind: 'unsupported', message: 'Speech recognition is not supported in this browser.' })
+      setError({ kind: 'unsupported' })
       return
     }
     recognizerRef.current?.abort()
@@ -45,14 +45,14 @@ export function useSpeechRecognition(lang = 'en-US'): SpeechRecognitionState {
         setFinal(fin)
         setInterim(interim)
       },
-      onError: (kind, message) => setError({ kind, message }),
+      onError: (kind, detail) => setError({ kind, detail }),
     })
     recognizerRef.current = recognizer
     try {
       recognizer.start()
       setListening(true)
     } catch (err) {
-      setError({ kind: 'other', message: err instanceof Error ? err.message : String(err) })
+      setError({ kind: 'other', detail: err instanceof Error ? err.message : String(err) })
     }
   }, [lang])
 

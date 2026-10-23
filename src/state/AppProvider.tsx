@@ -18,6 +18,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     saveSettings(settings)
     document.documentElement.dataset.theme = settings.theme
+    document.documentElement.lang = settings.language
   }, [settings])
 
   useEffect(() => {

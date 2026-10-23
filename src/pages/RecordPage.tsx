@@ -1,11 +1,15 @@
+import { GitCompareArrows, Languages, Library, Lightbulb, MessageSquareText, Shuffle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { RecorderPanel } from '../components/RecorderPanel'
 import { RecordingRow } from '../components/RecordingRow'
 import { StarGuide } from '../components/StarGuide'
 import { SupportNotice } from '../components/SupportNotice'
-import { CATEGORY_LABELS, PROMPTS, PROMPTS_BY_ID } from '../data/prompts'
+import { Disclosure } from '../components/ui/Disclosure'
+import { EmptyState } from '../components/ui/EmptyState'
+import { PROMPTS, PROMPTS_BY_ID } from '../data/prompts'
 import { useApp } from '../hooks/useApp'
+import { useI18n } from '../hooks/useI18n'
 import { listRecordingsForPrompt } from '../lib/db'
 import { getProgramPosition, randomItem } from '../lib/program'
 import type { Recording, TaskKind } from '../types'
@@ -20,6 +24,7 @@ export default function RecordPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { settings } = useApp()
+  const { t } = useI18n()
   const prompt = PROMPTS_BY_ID.get(params.get('prompt') ?? '')
   const task = parseTask(params.get('task'))
   const secondsParam = Number(params.get('seconds'))
@@ -45,16 +50,23 @@ export default function RecordPage() {
   if (!prompt) {
     return (
       <div className="card">
-        <h1>Pick a prompt</h1>
-        <p className="muted">No prompt selected. Choose one from the question bank or get a random one.</p>
-        <div className="row">
-          <button type="button" className="btn btn-primary" onClick={goRandom}>
-            🎲 Random prompt
-          </button>
-          <Link to="/questions" className="btn">
-            Question bank
-          </Link>
-        </div>
+        <EmptyState
+          icon={MessageSquareText}
+          title={t.record.pickTitle}
+          text={t.record.pickText}
+          action={
+            <div className="row center">
+              <button type="button" className="btn btn-primary" onClick={goRandom}>
+                <Shuffle size={16} aria-hidden />
+                {t.record.randomPrompt}
+              </button>
+              <Link to="/questions" className="btn">
+                <Library size={16} aria-hidden />
+                {t.record.bank}
+              </Link>
+            </div>
+          }
+        />
       </div>
     )
   }
@@ -63,35 +75,44 @@ export default function RecordPage() {
   const allowVideo = prompt.phase === 3 || pos?.phase === 3
 
   return (
-    <div className="stack">
+    <div className="stack-lg">
       <SupportNotice />
-      <div className="card">
+      <section className="card prompt-card">
         <div className="row spread">
           <div className="row">
-            <span className="badge badge-accent">{CATEGORY_LABELS[prompt.category]}</span>
-            <span className={`badge badge-phase-${prompt.phase}`}>Phase {prompt.phase}</span>
-            {task && <span className="badge">Today&apos;s {task} task</span>}
+            <span className="badge badge-accent">{t.categories[prompt.category]}</span>
+            <span className={`badge badge-phase-${prompt.phase}`}>{t.common.phase(prompt.phase)}</span>
+            {task && <span className="badge badge-secondary">{t.record.todaysTask}</span>}
           </div>
           <button type="button" className="btn btn-sm btn-ghost" onClick={goRandom}>
-            🎲 Another prompt
+            <Shuffle size={16} aria-hidden />
+            {t.record.another}
           </button>
         </div>
-        <p className="prompt-text">{prompt.text}</p>
-        {prompt.hints && (
-          <details>
-            <summary className="small muted" style={{ cursor: 'pointer' }}>
-              Ideas to mention
-            </summary>
-            <ul className="bullets small" style={{ marginTop: '0.4rem' }}>
-              {prompt.hints.map((h) => (
-                <li key={h}>{h}</li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </div>
+        <p className="prompt-text" lang="en">
+          {prompt.text}
+        </p>
+        <div className="stack" style={{ gap: 8 }}>
+          {settings.showHintsTr && (
+            <Disclosure summary={t.record.hintTr} icon={Languages} className="hint-tr" defaultOpen>
+              <p className="m0" lang="tr">
+                {prompt.hintTr}
+              </p>
+            </Disclosure>
+          )}
+          {prompt.hints && (
+            <Disclosure summary={t.record.ideas} icon={Lightbulb}>
+              <ul className="bullets small" lang="en">
+                {prompt.hints.map((h) => (
+                  <li key={h}>{h}</li>
+                ))}
+              </ul>
+            </Disclosure>
+          )}
+        </div>
+      </section>
 
-      <div className="card">
+      <section className="card">
         <RecorderPanel
           key={prompt.id}
           promptText={prompt.text}
@@ -104,22 +125,23 @@ export default function RecordPage() {
           guide={prompt.category === 'star' ? <StarGuide /> : undefined}
           onSaved={loadHistory}
         />
-      </div>
+      </section>
 
       {history.length > 0 && (
-        <div className="card">
+        <section className="card">
           <div className="card-title">
-            <h2>Your attempts at this prompt</h2>
+            <h2>{t.record.attemptsTitle}</h2>
             {history.length >= 2 && (
-              <Link className="btn btn-sm" to={`/archive?compare=${prompt.id}`}>
-                Compare
+              <Link className="btn btn-sm btn-soft" to={`/archive?compare=${prompt.id}`}>
+                <GitCompareArrows size={16} aria-hidden />
+                {t.record.compare}
               </Link>
             )}
           </div>
           {history.map((rec) => (
             <RecordingRow key={rec.id} rec={rec} showPrompt={false} />
           ))}
-        </div>
+        </section>
       )}
     </div>
   )

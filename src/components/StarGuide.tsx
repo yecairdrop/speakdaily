@@ -1,22 +1,20 @@
-const STEPS = [
-  { key: 'S', name: 'Situation', text: 'Where and when? Set the scene in 1–2 sentences.', share: '≈10%' },
-  { key: 'T', name: 'Task', text: 'What was your responsibility or the challenge?', share: '≈10%' },
-  { key: 'A', name: 'Action', text: 'What did YOU do, step by step? Say "I", not "we".', share: '≈60%' },
-  { key: 'R', name: 'Result', text: 'What happened? Numbers if possible + what you learned.', share: '≈20%' },
-]
+import { useI18n } from '../hooks/useI18n'
 
 export function StarGuide() {
+  const { t } = useI18n()
   return (
-    <div className="star-guide" aria-label="STAR structure guide">
-      {STEPS.map((s) => (
-        <div key={s.key} className="star-step">
-          <div>
-            <strong>{s.key}</strong>
-            {s.name} <span className="muted small">{s.share}</span>
+    <div className="stack" style={{ gap: 8, width: '100%' }}>
+      <p className="small muted m0" style={{ textAlign: 'left' }}>
+        <strong>{t.star.title}:</strong> {t.star.explain}
+      </p>
+      <div className="star-guide" aria-label={t.star.title}>
+        {t.star.steps.map((s) => (
+          <div key={s.name} className="star-step">
+            <strong>{s.name}</strong>
+            <p>{s.text}</p>
           </div>
-          <p>{s.text}</p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

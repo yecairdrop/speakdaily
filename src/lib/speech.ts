@@ -60,7 +60,8 @@ export interface SpeechCapture {
 
 export interface RecognizerCallbacks {
   onUpdate: (finalText: string, interimText: string) => void
-  onError: (kind: SpeechErrorKind, message: string) => void
+  /** `detail` is the raw engine message, only for unexpected errors. */
+  onError: (kind: SpeechErrorKind, detail?: string) => void
 }
 
 function joinText(a: string, b: string): string {
@@ -177,18 +178,15 @@ export class ContinuousRecognizer {
         case 'not-allowed':
         case 'service-not-allowed':
           this.wanted = false
-          this.cb.onError('permission', 'Microphone access for speech recognition was blocked.')
+          this.cb.onError('permission')
           return
         case 'audio-capture':
           this.wanted = false
-          this.cb.onError('no-microphone', 'No microphone was found.')
+          this.cb.onError('no-microphone')
           return
         case 'network':
           this.wanted = false
-          this.cb.onError(
-            'network',
-            'Speech recognition needs an internet connection (Chrome sends audio to its speech service).',
-          )
+          this.cb.onError('network')
           return
         default:
           this.cb.onError('other', event.message || event.error)

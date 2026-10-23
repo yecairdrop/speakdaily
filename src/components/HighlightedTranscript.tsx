@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react'
+import { useI18n } from '../hooks/useI18n'
 import { CONNECTORS, findPhraseMatches } from '../lib/analysis'
 
 interface Props {
@@ -9,7 +10,14 @@ interface Props {
 
 /** Transcript with filler words (amber) and connector phrases (green) highlighted. */
 export function HighlightedTranscript({ text, fillers, connectors = CONNECTORS }: Props) {
-  if (!text.trim()) return <div className="transcript"><span className="placeholder">No speech was recognised.</span></div>
+  const { t } = useI18n()
+  if (!text.trim()) {
+    return (
+      <div className="transcript">
+        <span className="placeholder">{t.analysis.noSpeech}</span>
+      </div>
+    )
+  }
 
   const fillerSet = new Set(fillers.map((f) => f.toLowerCase()))
   const matches = findPhraseMatches(text, [...fillers, ...connectors])
@@ -19,7 +27,11 @@ export function HighlightedTranscript({ text, fillers, connectors = CONNECTORS }
     if (m.start > cursor) parts.push(<Fragment key={`t${i}`}>{text.slice(cursor, m.start)}</Fragment>)
     const isFiller = fillerSet.has(m.phrase)
     parts.push(
-      <mark key={`m${i}`} className={isFiller ? 'filler' : 'connector'} title={isFiller ? 'Filler word' : 'Connector'}>
+      <mark
+        key={`m${i}`}
+        className={isFiller ? 'filler' : 'connector'}
+        title={isFiller ? t.analysis.legendFillerText : t.analysis.legendConnectorText}
+      >
         {text.slice(m.start, m.end)}
       </mark>,
     )
@@ -27,5 +39,9 @@ export function HighlightedTranscript({ text, fillers, connectors = CONNECTORS }
   })
   if (cursor < text.length) parts.push(<Fragment key="end">{text.slice(cursor)}</Fragment>)
 
-  return <div className="transcript">{parts}</div>
+  return (
+    <div className="transcript" lang="en">
+      {parts}
+    </div>
+  )
 }

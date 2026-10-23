@@ -41,7 +41,7 @@ describe('analyzeLocally', () => {
     const r = analyzeLocally({ ...base, transcript: '', durationSec: 10 })
     expect(r.wordCount).toBe(0)
     expect(r.vocabularyVariety).toBe(0)
-    expect(r.feedback[0]).toMatch(/No speech/)
+    expect(r.feedback[0]).toEqual({ id: 'noSpeech' })
   })
 })
 

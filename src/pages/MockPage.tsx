@@ -1,13 +1,17 @@
+import { ArrowLeft, ArrowRight, Briefcase, CircleStop, Flag, History, Info, Play, SkipForward } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MockSummary } from '../components/MockSummary'
 import { RecorderPanel } from '../components/RecorderPanel'
 import { StarGuide } from '../components/StarGuide'
 import { SupportNotice } from '../components/SupportNotice'
-import { CATEGORY_LABELS, PROMPTS, PROMPTS_BY_ID } from '../data/prompts'
+import { PageHeader } from '../components/ui/PageHeader'
+import { Switch } from '../components/ui/Switch'
+import { PROMPTS, PROMPTS_BY_ID } from '../data/prompts'
 import { useApp } from '../hooks/useApp'
+import { useI18n } from '../hooks/useI18n'
 import { useRecordings } from '../hooks/useRecordings'
-import { formatDateTime, toDateKey } from '../lib/dates'
+import { toDateKey } from '../lib/dates'
 import { listSessions, newId, saveSession } from '../lib/db'
 import { getProgramPosition, sampleWithoutReplacement } from '../lib/program'
 import type { MockSession, Prompt, Recording } from '../types'
@@ -23,6 +27,7 @@ function questionsOf(session: MockSession): Prompt[] {
 export default function MockPage() {
   const [params] = useSearchParams()
   const { settings, markTask } = useApp()
+  const { t, formatDateTime } = useI18n()
   const { recordings, refresh } = useRecordings()
   const pos = getProgramPosition(settings.startDate)
   const phase = pos?.phase ?? 2
@@ -110,21 +115,21 @@ export default function MockPage() {
 
   if (stage === 'running' && session && current) {
     return (
-      <div className="stack">
+      <div className="stack-lg">
         <SupportNotice />
-        <div className="card">
+        <section className="card prompt-card">
           <div className="row spread">
-            <span className="badge badge-accent">
-              Question {index + 1} of {questions.length}
-            </span>
-            <span className="badge">{CATEGORY_LABELS[current.category]}</span>
+            <span className="badge badge-accent">{t.mock.questionOf(index + 1, questions.length)}</span>
+            <span className="badge">{t.categories[current.category]}</span>
           </div>
-          <div className="progress-bar" style={{ margin: '0.75rem 0' }}>
+          <div className="progress-track" style={{ margin: '14px 0 0' }} aria-hidden>
             <div style={{ width: `${(index / questions.length) * 100}%` }} />
           </div>
-          <p className="prompt-text">{current.text}</p>
-        </div>
-        <div className="card">
+          <p className="prompt-text" lang="en">
+            {current.text}
+          </p>
+        </section>
+        <section className="card">
           <RecorderPanel
             key={`${session.id}-${index}`}
             promptText={current.text}
@@ -140,17 +145,21 @@ export default function MockPage() {
             onSaved={handleSaved}
             resultActions={() => (
               <button type="button" className="btn btn-primary" onClick={next}>
-                {index + 1 >= questions.length ? 'Finish & see summary' : 'Next question →'}
+                {index + 1 >= questions.length ? <Flag size={16} aria-hidden /> : null}
+                {index + 1 >= questions.length ? t.mock.finish : t.mock.next}
+                {index + 1 < questions.length && <ArrowRight size={16} aria-hidden />}
               </button>
             )}
           />
-        </div>
+        </section>
         <div className="row">
           <button type="button" className="btn btn-ghost" onClick={next}>
-            Skip question
+            <SkipForward size={16} aria-hidden />
+            {t.mock.skip}
           </button>
           <button type="button" className="btn btn-ghost" onClick={() => void finish()}>
-            End interview now
+            <CircleStop size={16} aria-hidden />
+            {t.mock.endNow}
           </button>
         </div>
       </div>
@@ -159,99 +168,99 @@ export default function MockPage() {
 
   if (stage === 'summary' && session) {
     return (
-      <div className="stack">
-        <div className="page-header row spread">
-          <div>
-            <h1>Mock interview summary</h1>
-            <p>{formatDateTime(session.createdAt)}</p>
-          </div>
-          <button type="button" className="btn" onClick={() => setStage('setup')}>
-            ← Back
-          </button>
-        </div>
-        <div className="card">
+      <div className="stack-lg">
+        <PageHeader
+          icon={Briefcase}
+          title={t.mock.summaryTitle}
+          subtitle={formatDateTime(session.createdAt)}
+          actions={
+            <button type="button" className="btn" onClick={() => setStage('setup')}>
+              <ArrowLeft size={16} aria-hidden />
+              {t.common.back}
+            </button>
+          }
+        />
+        <section className="card">
           <MockSummary questions={questionsOf(session)} answers={answers} />
-        </div>
+        </section>
       </div>
     )
   }
 
   return (
-    <div className="stack">
-      <div className="page-header">
-        <h1>Mock interview</h1>
-        <p>Random interview and STAR questions, one after another — like the real thing. No hints, no second chances (well, you can re-record).</p>
-      </div>
+    <div className="stack-lg">
+      <PageHeader icon={Briefcase} title={t.mock.title} subtitle={t.mock.subtitle} />
       {phase < 2 && (
         <div className="alert">
-          <p>
-            Mock interviews start in <strong>phase 2</strong> (week 5). You can still try one now as a preview.
-          </p>
+          <Info size={20} aria-hidden />
+          <p className="small">{t.mock.phase1Note}</p>
         </div>
       )}
-      <div className="card">
+      <section className="card stack">
         <div className="grid grid-3">
-          <div className="field">
-            <label>Questions</label>
-            <div className="segmented">
+          <div className="field m0">
+            <span className="field-label">{t.mock.questions}</span>
+            <div className="segmented" role="group" aria-label={t.mock.questions}>
               {[5, 10].map((n) => (
-                <button key={n} type="button" className={count === n ? 'active' : ''} onClick={() => setCount(n)}>
-                  {n} questions
+                <button key={n} type="button" className={count === n ? 'active' : ''} onClick={() => setCount(n)} aria-pressed={count === n}>
+                  {t.mock.nQuestions(n)}
                 </button>
               ))}
             </div>
           </div>
-          <div className="field">
-            <label htmlFor="mock-seconds">Time per answer</label>
-            <select
-              id="mock-seconds"
-              className="input"
-              value={seconds}
-              onChange={(e) => setSeconds(Number(e.target.value))}
-            >
+          <div className="field m0">
+            <label htmlFor="mock-seconds">{t.mock.timePerAnswer}</label>
+            <select id="mock-seconds" className="input" value={seconds} onChange={(e) => setSeconds(Number(e.target.value))}>
               {Array.from(new Set([...SECOND_OPTIONS, seconds]))
                 .sort((a, b) => a - b)
                 .map((s) => (
                   <option key={s} value={s}>
-                    {s} seconds
+                    {t.common.seconds(s)}
                   </option>
                 ))}
             </select>
           </div>
-          <div className="field">
-            <label htmlFor="mock-video">Camera</label>
-            <label className="row small" style={{ fontWeight: 400 }}>
-              <input id="mock-video" type="checkbox" checked={video} onChange={(e) => setVideo(e.target.checked)} />
-              Record video (practice eye contact &amp; posture)
-            </label>
+          <div className="field m0">
+            <Switch id="mock-video" label={t.mock.camera} hint={t.mock.cameraHint} checked={video} onChange={setVideo} />
           </div>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => void start()}>
-          Start mock interview
-        </button>
-        <p className="small muted" style={{ marginTop: '0.6rem', marginBottom: 0 }}>
-          Drawn from {pool.length} interview &amp; STAR questions up to phase {Math.max(phase, 2)}.
-        </p>
-      </div>
+        <div className="row">
+          <button type="button" className="btn btn-primary btn-lg" onClick={() => void start()}>
+            <Play size={18} fill="currentColor" aria-hidden />
+            {t.mock.start}
+          </button>
+          <span className="xs muted">{t.mock.poolInfo(pool.length, Math.max(phase, 2))}</span>
+        </div>
+      </section>
 
       {pastSessions.length > 0 && (
-        <div className="card">
-          <h2>Past sessions</h2>
+        <section className="card">
+          <div className="card-title">
+            <h2>
+              <History size={20} aria-hidden />
+              {t.mock.pastSessions}
+            </h2>
+          </div>
           {pastSessions.map((s) => (
-            <div key={s.id} className="list-item row spread">
-              <div>
-                <div style={{ fontWeight: 600 }}>{formatDateTime(s.createdAt)}</div>
-                <div className="small muted">
-                  {new Set(s.recordingIds).size} answer(s) · {s.questionIds.length} questions
-                  {!s.completed && ' · unfinished'}
+            <div key={s.id} className="list-item">
+              <div className="list-row" style={{ alignItems: 'center' }}>
+                <span className="list-icon rose" aria-hidden>
+                  <Briefcase size={20} />
+                </span>
+                <div className="list-main">
+                  <div className="bold">{formatDateTime(s.createdAt)}</div>
+                  <div className="small muted">
+                    {t.mock.answersInfo(new Set(s.recordingIds).size, s.questionIds.length)}
+                    {!s.completed && ` · ${t.mock.unfinished}`}
+                  </div>
                 </div>
+                <button type="button" className="btn btn-sm btn-soft" onClick={() => openPast(s)}>
+                  {t.mock.viewSummary}
+                </button>
               </div>
-              <button type="button" className="btn btn-sm" onClick={() => openPast(s)}>
-                View summary
-              </button>
             </div>
           ))}
-        </div>
+        </section>
       )}
     </div>
   )

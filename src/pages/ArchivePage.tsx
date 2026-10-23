@@ -1,7 +1,12 @@
+import { Archive, ArrowRight, AudioLines, Download, GitCompareArrows, ListMusic, Search, SearchX, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ComparePanel } from '../components/ComparePanel'
 import { RecordingRow } from '../components/RecordingRow'
+import { EmptyState } from '../components/ui/EmptyState'
+import { PageHeader } from '../components/ui/PageHeader'
+import { SkeletonList } from '../components/ui/Skeleton'
+import { useI18n } from '../hooks/useI18n'
 import { useRecordings } from '../hooks/useRecordings'
 import { toDateKey } from '../lib/dates'
 import { downloadBlob, exportRecordingsZip } from '../lib/exportZip'
@@ -10,15 +15,9 @@ import type { RecordingKind } from '../types'
 type Filter = 'all' | RecordingKind
 type View = 'list' | 'compare'
 
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'speaking', label: 'Speaking' },
-  { id: 'shadowing', label: 'Shadowing' },
-  { id: 'mock', label: 'Mock interviews' },
-]
-
 export default function ArchivePage() {
   const [params, setParams] = useSearchParams()
+  const { t, locale } = useI18n()
   const compareGroup = params.get('compare')
   const view: View = compareGroup !== null ? 'compare' : 'list'
   const { recordings, loading, error, remove } = useRecordings()
@@ -26,6 +25,13 @@ export default function ArchivePage() {
   const [query, setQuery] = useState('')
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+
+  const filters: { id: Filter; label: string }[] = [
+    { id: 'all', label: t.archive.filterAll },
+    { id: 'speaking', label: t.archive.filterSpeaking },
+    { id: 'shadowing', label: t.archive.filterShadowing },
+    { id: 'mock', label: t.archive.filterMock },
+  ]
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -40,56 +46,46 @@ export default function ArchivePage() {
     setExporting(true)
     setExportError(null)
     try {
-      const blob = await exportRecordingsZip(recordings)
+      const blob = await exportRecordingsZip(recordings, t.exportFile, locale)
       downloadBlob(blob, `speakdaily-recordings-${toDateKey()}.zip`)
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'Export failed')
+      setExportError(err instanceof Error ? err.message : t.archive.exportFailed)
     } finally {
       setExporting(false)
     }
   }
 
   const handleDelete = async (id: string, label: string) => {
-    if (!window.confirm(`Delete this recording?\n\n“${label.slice(0, 80)}”\n\nThis cannot be undone.`)) return
+    if (!window.confirm(t.archive.deleteConfirm(label.slice(0, 80)))) return
     await remove(id)
   }
 
   const totalMinutes = Math.round(recordings.reduce((s, r) => s + r.durationSec, 0) / 60)
 
   return (
-    <div className="stack">
-      <div className="page-header row spread">
-        <div>
-          <h1>Archive</h1>
-          <p>
-            {recordings.length} recording(s) · {totalMinutes} min · stored only in this browser
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn"
-          onClick={() => void handleExport()}
-          disabled={exporting || recordings.length === 0}
-        >
-          {exporting ? 'Preparing zip…' : '⬇ Export all (.zip)'}
-        </button>
-      </div>
+    <div className="stack-lg">
+      <PageHeader
+        icon={Archive}
+        title={t.archive.title}
+        subtitle={t.archive.summary(recordings.length, totalMinutes)}
+        actions={
+          <button type="button" className="btn" onClick={() => void handleExport()} disabled={exporting || recordings.length === 0}>
+            <Download size={16} aria-hidden />
+            {exporting ? t.archive.exporting : t.archive.export}
+          </button>
+        }
+      />
 
       {(error || exportError) && (
-        <div className="alert alert-danger">
-          <p>{error ?? exportError}</p>
+        <div className="alert alert-danger" role="alert">
+          <p className="small">{error ? t.archive.loadError : exportError}</p>
         </div>
       )}
 
-      <div className="segmented" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={view === 'list'}
-          className={view === 'list' ? 'active' : ''}
-          onClick={() => setParams({})}
-        >
-          Recordings
+      <div className="segmented" role="tablist" style={{ alignSelf: 'flex-start' }}>
+        <button type="button" role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'active' : ''} onClick={() => setParams({})}>
+          <ListMusic size={16} aria-hidden />
+          {t.archive.tabRecordings}
         </button>
         <button
           type="button"
@@ -98,69 +94,79 @@ export default function ArchivePage() {
           className={view === 'compare' ? 'active' : ''}
           onClick={() => setParams({ compare: '' })}
         >
-          Compare
+          <GitCompareArrows size={16} aria-hidden />
+          {t.archive.tabCompare}
         </button>
       </div>
 
       {loading ? (
-        <p className="muted">Loading…</p>
+        <section className="card">
+          <SkeletonList rows={4} />
+        </section>
       ) : recordings.length === 0 ? (
-        <div className="card empty">
-          <p>No recordings yet.</p>
-          <Link className="btn btn-primary" to="/">
-            Go to today&apos;s tasks
-          </Link>
-        </div>
+        <section className="card">
+          <EmptyState
+            icon={AudioLines}
+            title={t.archive.emptyTitle}
+            text={t.archive.emptyText}
+            action={
+              <Link className="btn btn-primary" to="/">
+                {t.archive.goToday}
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+            }
+          />
+        </section>
       ) : view === 'compare' ? (
-        <div className="card">
+        <section className="card">
           <ComparePanel key={compareGroup} recordings={recordings} initialGroup={compareGroup} />
-        </div>
+        </section>
       ) : (
-        <div className="card">
-          <div className="row" style={{ marginBottom: '0.5rem' }}>
+        <section className="card stack">
+          <div className="row">
             <div className="segmented">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  className={filter === f.id ? 'active' : ''}
-                  onClick={() => setFilter(f.id)}
-                >
+              {filters.map((f) => (
+                <button key={f.id} type="button" className={filter === f.id ? 'active' : ''} onClick={() => setFilter(f.id)} aria-pressed={filter === f.id}>
                   {f.label}
                 </button>
               ))}
             </div>
-            <input
-              className="input"
-              style={{ flex: 1, minWidth: 180 }}
-              type="search"
-              placeholder="Search prompts and transcripts…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Search recordings"
-            />
+            <div className="search">
+              <Search size={16} aria-hidden />
+              <input
+                className="input"
+                type="search"
+                placeholder={t.archive.search}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label={t.archive.search}
+              />
+            </div>
           </div>
           {visible.length === 0 ? (
-            <p className="empty">Nothing matches this filter.</p>
+            <EmptyState icon={SearchX} title={t.archive.noMatch} />
           ) : (
-            visible.map((rec) => (
-              <RecordingRow
-                key={rec.id}
-                rec={rec}
-                actions={
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger"
-                    onClick={() => void handleDelete(rec.id, rec.promptText)}
-                    aria-label="Delete recording"
-                  >
-                    🗑
-                  </button>
-                }
-              />
-            ))
+            <div>
+              {visible.map((rec) => (
+                <RecordingRow
+                  key={rec.id}
+                  rec={rec}
+                  actions={
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger"
+                      onClick={() => void handleDelete(rec.id, rec.promptText)}
+                      aria-label={t.archive.deleteAria}
+                      title={t.archive.deleteAria}
+                    >
+                      <Trash2 size={16} aria-hidden />
+                    </button>
+                  }
+                />
+              ))}
+            </div>
           )}
-        </div>
+        </section>
       )}
     </div>
   )

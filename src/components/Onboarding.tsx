@@ -1,29 +1,44 @@
+import { ArrowRight, CircleHelp, Layers, Rocket, Sprout } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PHASES } from '../data/program'
 import { useApp } from '../hooks/useApp'
+import { useI18n } from '../hooks/useI18n'
 import { toDateKey } from '../lib/dates'
+
+const PHASE_ICONS = [Sprout, Layers, Rocket]
 
 export function Onboarding() {
   const { updateSettings } = useApp()
+  const { t } = useI18n()
   const [date, setDate] = useState(toDateKey())
 
   return (
-    <div className="hero card">
-      <h1>Welcome to SpeakDaily 👋</h1>
-      <p className="muted">
-        A 12-week speaking program to take your spoken English from B1 to B2, with a focus on job interviews. A few
-        minutes every day: shadow a passage, answer a prompt, and look at your stats.
-      </p>
-      <ul className="bullets" style={{ marginBottom: '1.25rem' }}>
-        {PHASES.map((ph) => (
-          <li key={ph.phase}>
-            <strong>
-              Weeks {ph.weeks[0]}–{ph.weeks[1]} · {ph.name}
-            </strong>{' '}
-            <span className="muted">— {ph.summary}</span>
-          </li>
-        ))}
-      </ul>
+    <div className="card stack-lg" style={{ maxWidth: 640, margin: '1rem auto' }}>
+      <div>
+        <h1 className="hero-greeting" style={{ fontSize: '2rem' }}>
+          {t.onboarding.title}
+        </h1>
+        <p className="muted m0">{t.onboarding.intro}</p>
+      </div>
+
+      <ol className="journey" aria-label={t.roadmap.title}>
+        {PHASES.map((ph) => {
+          const Icon = PHASE_ICONS[ph.phase - 1]
+          const text = t.program.phases[ph.phase - 1]
+          return (
+            <li key={ph.phase} className={`milestone phase-${ph.phase}`} style={{ marginTop: 0 }}>
+              <span className="milestone-icon" aria-hidden>
+                <Icon size={26} />
+              </span>
+              <div className="xs bold muted">{t.onboarding.weeksRange(ph.weeks[0], ph.weeks[1])}</div>
+              <div className="bold">{text.name}</div>
+              <div className="small muted">{text.summary}</div>
+            </li>
+          )
+        })}
+      </ol>
+
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -31,20 +46,20 @@ export function Onboarding() {
         }}
       >
         <div className="field">
-          <label htmlFor="start-date">When does day 1 start?</label>
-          <input
-            id="start-date"
-            className="input"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-          <span className="hint">You can change this later in Settings.</span>
+          <label htmlFor="start-date">{t.onboarding.question}</label>
+          <input id="start-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          <span className="hint">{t.onboarding.hint}</span>
         </div>
-        <button className="btn btn-primary" type="submit">
-          Start my program
-        </button>
+        <div className="row">
+          <button className="btn btn-primary btn-lg" type="submit">
+            {t.onboarding.submit}
+            <ArrowRight size={18} aria-hidden />
+          </button>
+          <Link className="btn btn-ghost" to="/help">
+            <CircleHelp size={16} aria-hidden />
+            {t.onboarding.howItWorks}
+          </Link>
+        </div>
       </form>
     </div>
   )

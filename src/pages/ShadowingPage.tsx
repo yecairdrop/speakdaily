@@ -1,24 +1,18 @@
+import { ArrowRight, Check, Headphones, Info, Languages, Play, Shuffle, Square } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { RecorderPanel } from '../components/RecorderPanel'
 import { SupportNotice } from '../components/SupportNotice'
+import { Disclosure } from '../components/ui/Disclosure'
+import { PageHeader } from '../components/ui/PageHeader'
 import { PASSAGES, PASSAGES_BY_ID } from '../data/passages'
 import { useApp } from '../hooks/useApp'
+import { useI18n } from '../hooks/useI18n'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getProgramPosition, getTodayPlan, randomItem } from '../lib/program'
 import type { Passage } from '../types'
 
 type Step = 1 | 2 | 3
-
-const STEPS: { id: Step; label: string; help: string }[] = [
-  { id: 1, label: '1 · Listen', help: 'Just listen and read along. Notice stress, linking and where the speaker pauses.' },
-  {
-    id: 2,
-    label: '2 · Speak along',
-    help: 'Play it again and speak at the same time as the voice (headphones help). Copy the rhythm, not just the words.',
-  },
-  { id: 3, label: '3 · Record', help: 'Now read the passage aloud on your own. You get a word-match score at the end.' },
-]
 
 function PassageText({ text, charIndex }: { text: string; charIndex: number | null }) {
   const words = useMemo(() => {
@@ -31,10 +25,10 @@ function PassageText({ text, charIndex }: { text: string; charIndex: number | nu
     for (let i = 0; i < words.length && words[i].start <= charIndex; i++) current = i
   }
   return (
-    <p className="prompt-text" style={{ fontWeight: 500, fontSize: '1.15rem', lineHeight: 1.7 }}>
+    <p className="passage" lang="en">
       {words.map((w, i) => (
-        <span key={i} style={i === current ? { background: 'var(--accent-soft)', color: 'var(--accent)', borderRadius: 4 } : undefined}>
-          {w.word}{' '}
+        <span key={i}>
+          <span className={i === current ? 'current' : undefined}>{w.word}</span>{' '}
         </span>
       ))}
     </p>
@@ -44,6 +38,7 @@ function PassageText({ text, charIndex }: { text: string; charIndex: number | nu
 export default function ShadowingPage() {
   const [params, setParams] = useSearchParams()
   const { settings, updateSettings } = useApp()
+  const { t } = useI18n()
   const tts = useSpeechSynthesis()
   const [step, setStep] = useState<Step>(1)
   const [done, setDone] = useState<Set<Step>>(new Set())
@@ -52,6 +47,7 @@ export default function ShadowingPage() {
   const fallback: Passage = pos ? getTodayPlan(pos, settings).shadowing : PASSAGES[0]
   const passage = PASSAGES_BY_ID.get(params.get('passage') ?? '') ?? fallback
   const isTodayTask = params.get('task') === 'shadowing'
+  const stepText = t.shadowing.steps[step - 1]
 
   const choosePassage = (id: string) => {
     tts.cancel()
@@ -72,21 +68,19 @@ export default function ShadowingPage() {
   }
 
   return (
-    <div className="stack">
+    <div className="stack-lg">
       <SupportNotice needSynthesis />
-      <div className="page-header">
-        <h1>Shadowing</h1>
-        <p>Listen → speak along → record yourself. Great for rhythm, linking and confidence.</p>
-      </div>
+      <PageHeader icon={Headphones} title={t.shadowing.title} subtitle={t.shadowing.subtitle} />
 
-      <div className="card">
-        <div className="row spread" style={{ marginBottom: '0.75rem' }}>
+      <section className="card stack">
+        <div className="row">
           <select
             className="input"
             style={{ flex: 1, minWidth: 200 }}
             value={passage.id}
             onChange={(e) => choosePassage(e.target.value)}
-            aria-label="Choose passage"
+            aria-label={t.shadowing.choose}
+            lang="en"
           >
             {PASSAGES.map((p, i) => (
               <option key={p.id} value={p.id}>
@@ -96,28 +90,38 @@ export default function ShadowingPage() {
           </select>
           <button
             type="button"
-            className="btn btn-sm"
+            className="btn btn-ghost"
             onClick={() => {
               const next = randomItem(PASSAGES.filter((p) => p.id !== passage.id))
               if (next) choosePassage(next.id)
             }}
           >
-            🎲 Random
+            <Shuffle size={16} aria-hidden />
+            {t.common.random}
           </button>
         </div>
 
-        <div className="row" style={{ marginBottom: '0.25rem' }}>
-          <h2 style={{ margin: 0 }}>{passage.title}</h2>
-          {isTodayTask && <span className="badge badge-accent">Today&apos;s passage</span>}
-          <span className="muted small">{passage.text.split(/\s+/).length} words</span>
+        <div className="row">
+          <h2 className="m0" lang="en">
+            {passage.title}
+          </h2>
+          {isTodayTask && <span className="badge badge-accent">{t.shadowing.todaysPassage}</span>}
+          <span className="badge">{t.shadowing.words(passage.text.split(/\s+/).length)}</span>
         </div>
+
+        <Disclosure summary={t.shadowing.about} icon={Languages} className="hint-tr" defaultOpen={settings.showHintsTr}>
+          <p className="m0" lang="tr">
+            {passage.summaryTr}
+          </p>
+        </Disclosure>
+
         <PassageText text={passage.text} charIndex={tts.charIndex} />
 
-        <div className="grid grid-2" style={{ marginTop: '0.5rem' }}>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label htmlFor="rate">Speed: {settings.ttsRate.toFixed(2)}×</label>
+        <div className="grid grid-2">
+          <div className="field m0">
+            <label htmlFor="rate">{t.shadowing.speed(settings.ttsRate.toFixed(2))}</label>
             <div className="slider-row">
-              <span className="small muted">0.7×</span>
+              <span className="xs muted">0.7×</span>
               <input
                 id="rate"
                 type="range"
@@ -127,18 +131,18 @@ export default function ShadowingPage() {
                 value={settings.ttsRate}
                 onChange={(e) => updateSettings({ ttsRate: Number(e.target.value) })}
               />
-              <span className="small muted">1.2×</span>
+              <span className="xs muted">1.2×</span>
             </div>
           </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label htmlFor="voice">Voice</label>
+          <div className="field m0">
+            <label htmlFor="voice">{t.shadowing.voice}</label>
             <select
               id="voice"
               className="input"
               value={settings.ttsVoiceURI ?? ''}
               onChange={(e) => updateSettings({ ttsVoiceURI: e.target.value || null })}
             >
-              <option value="">Default English voice</option>
+              <option value="">{t.shadowing.defaultVoice}</option>
               {tts.voices.map((v) => (
                 <option key={v.voiceURI} value={v.voiceURI}>
                   {v.name} ({v.lang})
@@ -147,36 +151,55 @@ export default function ShadowingPage() {
             </select>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="card">
+      <section className="card stack">
         <div className="steps" role="tablist">
-          {STEPS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              role="tab"
-              aria-selected={step === s.id}
-              className={`step${step === s.id ? ' active' : done.has(s.id) ? ' done' : ''}`}
-              onClick={() => {
-                tts.cancel()
-                setStep(s.id)
-              }}
-            >
-              {done.has(s.id) && step !== s.id ? '✓ ' : ''}
-              {s.label}
-            </button>
-          ))}
+          {t.shadowing.steps.map((s, i) => {
+            const id = (i + 1) as Step
+            const isDone = done.has(id) && step !== id
+            return (
+              <button
+                key={s.label}
+                type="button"
+                role="tab"
+                aria-selected={step === id}
+                className={`step${step === id ? ' active' : isDone ? ' done' : ''}`}
+                onClick={() => {
+                  tts.cancel()
+                  setStep(id)
+                }}
+              >
+                <span className="step-num" aria-hidden>
+                  {isDone ? <Check size={14} strokeWidth={3} /> : id}
+                </span>
+                {s.label}
+              </button>
+            )
+          })}
         </div>
-        <p className="muted">{STEPS[step - 1].help}</p>
+        <p className="muted m0 row" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+          <Info size={18} aria-hidden style={{ marginTop: 3 }} />
+          <span>
+            {stepText.help}
+            {step === 1 && (
+              <>
+                <br />
+                <span className="xs subtle">{t.shadowing.whatIs}</span>
+              </>
+            )}
+          </span>
+        </p>
 
         {step < 3 ? (
           <div className="row">
-            <button type="button" className="btn btn-primary" onClick={() => void play(step)} disabled={!tts.supported}>
-              {tts.speaking ? '■ Stop' : step === 1 ? '▶ Play passage' : '▶ Play again & speak along'}
+            <button type="button" className="btn btn-primary btn-lg" onClick={() => void play(step)} disabled={!tts.supported}>
+              {tts.speaking ? <Square size={18} fill="currentColor" aria-hidden /> : <Play size={18} fill="currentColor" aria-hidden />}
+              {tts.speaking ? t.shadowing.stop : step === 1 ? t.shadowing.play : t.shadowing.playAgain}
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => setStep((step + 1) as Step)}>
-              Skip →
+              {t.shadowing.skip}
+              <ArrowRight size={16} aria-hidden />
             </button>
           </div>
         ) : (
@@ -192,7 +215,7 @@ export default function ShadowingPage() {
             onSaved={() => setDone((d) => new Set(d).add(3))}
           />
         )}
-      </div>
+      </section>
     </div>
   )
 }

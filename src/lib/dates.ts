@@ -28,12 +28,12 @@ export function addDays(key: string, days: number): string {
   return toDateKey(d)
 }
 
-export function formatDate(key: string): string {
-  return fromDateKey(key).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+export function formatDate(key: string, locale = 'en-GB'): string {
+  return fromDateKey(key).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function formatDateTime(ts: number): string {
-  return new Date(ts).toLocaleString('en-GB', {
+export function formatDateTime(ts: number, locale = 'en-GB'): string {
+  return new Date(ts).toLocaleString(locale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',

@@ -1,6 +1,11 @@
+import { ChevronUp, Lightbulb, Library, Mic, SearchX, Search, Shuffle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CATEGORIES, CATEGORY_LABELS, PROMPTS } from '../data/prompts'
+import { EmptyState } from '../components/ui/EmptyState'
+import { PageHeader } from '../components/ui/PageHeader'
+import { CATEGORIES, PROMPTS } from '../data/prompts'
+import { useApp } from '../hooks/useApp'
+import { useI18n } from '../hooks/useI18n'
 import { useRecordings } from '../hooks/useRecordings'
 import { randomItem } from '../lib/program'
 import type { Phase, PromptCategory } from '../types'
@@ -10,6 +15,8 @@ type PhaseFilter = 'all' | Phase
 
 export default function QuestionsPage() {
   const navigate = useNavigate()
+  const { settings } = useApp()
+  const { t } = useI18n()
   const { recordings } = useRecordings()
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [phase, setPhase] = useState<PhaseFilter>('all')
@@ -23,12 +30,12 @@ export default function QuestionsPage() {
   }, [recordings])
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = query.trim().toLocaleLowerCase()
     return PROMPTS.filter(
       (p) =>
         (category === 'all' || p.category === category) &&
         (phase === 'all' || p.phase === phase) &&
-        (!q || p.text.toLowerCase().includes(q)),
+        (!q || p.text.toLowerCase().includes(q) || p.hintTr.toLocaleLowerCase('tr').includes(q)),
     )
   }, [category, phase, query])
 
@@ -38,88 +45,94 @@ export default function QuestionsPage() {
   }
 
   return (
-    <div className="stack">
-      <div className="page-header row spread">
-        <div>
-          <h1>Question bank</h1>
-          <p>
-            {PROMPTS.length} prompts for interview, tech, daily life and opinion practice.
-          </p>
-        </div>
-        <button type="button" className="btn btn-primary" onClick={random} disabled={filtered.length === 0}>
-          🎲 Random prompt
-        </button>
-      </div>
+    <div className="stack-lg">
+      <PageHeader
+        icon={Library}
+        title={t.questions.title}
+        subtitle={t.questions.subtitle(PROMPTS.length)}
+        actions={
+          <button type="button" className="btn btn-primary" onClick={random} disabled={filtered.length === 0}>
+            <Shuffle size={16} aria-hidden />
+            {t.questions.random}
+          </button>
+        }
+      />
 
-      <div className="card">
-        <div className="stack">
-          <div className="chips" role="group" aria-label="Category">
-            {(['all', ...CATEGORIES] as const).map((c) => (
+      <section className="card stack">
+        <div className="chips" role="group" aria-label={t.questions.category}>
+          {(['all', ...CATEGORIES] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`chip${category === c ? ' selected' : ''}`}
+              onClick={() => setCategory(c)}
+              aria-pressed={category === c}
+            >
+              {c === 'all' ? t.questions.allCategories : t.categories[c]}
+            </button>
+          ))}
+        </div>
+        <div className="row">
+          <div className="segmented" role="group" aria-label={t.questions.phase}>
+            {(['all', 1, 2, 3] as const).map((ph) => (
               <button
-                key={c}
+                key={ph}
                 type="button"
-                className={`chip${category === c ? ' selected' : ''}`}
-                onClick={() => setCategory(c)}
-                aria-pressed={category === c}
+                className={phase === ph ? 'active' : ''}
+                onClick={() => setPhase(ph)}
+                aria-pressed={phase === ph}
               >
-                {c === 'all' ? 'All categories' : CATEGORY_LABELS[c]}
+                {ph === 'all' ? t.questions.allPhases : t.common.phase(ph)}
               </button>
             ))}
           </div>
-          <div className="row">
-            <div className="segmented" role="group" aria-label="Phase">
-              {(['all', 1, 2, 3] as const).map((ph) => (
-                <button
-                  key={ph}
-                  type="button"
-                  className={phase === ph ? 'active' : ''}
-                  onClick={() => setPhase(ph)}
-                  aria-pressed={phase === ph}
-                >
-                  {ph === 'all' ? 'All phases' : `Phase ${ph}`}
-                </button>
-              ))}
-            </div>
+          <div className="search">
+            <Search size={16} aria-hidden />
             <input
               className="input"
-              style={{ flex: 1, minWidth: 180 }}
               type="search"
-              placeholder="Search questions…"
+              placeholder={t.questions.search}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              aria-label="Search questions"
+              aria-label={t.questions.search}
             />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="card">
-        <p className="small muted" style={{ marginBottom: 0 }}>
-          {filtered.length} prompt(s)
-        </p>
+      <section className="card">
+        <p className="small muted bold">{t.questions.count(filtered.length)}</p>
+        {filtered.length === 0 && <EmptyState icon={SearchX} title={t.questions.noMatch} />}
         {filtered.map((p) => {
           const count = attempts.get(p.id) ?? 0
           const open = openId === p.id
           return (
             <div key={p.id} className="list-item">
-              <div className="row spread" style={{ alignItems: 'flex-start' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="row small" style={{ gap: '0.4rem', marginBottom: '0.25rem' }}>
-                    <span className="badge badge-accent">{CATEGORY_LABELS[p.category]}</span>
-                    <span className={`badge badge-phase-${p.phase}`}>Phase {p.phase}</span>
-                    <span className="muted">{p.suggestedSeconds}s</span>
-                    {count > 0 && <span className="badge badge-success">{count}× practised</span>}
+              <div className="list-row">
+                <div className="list-main">
+                  <div className="row" style={{ gap: 6 }}>
+                    <span className="badge badge-accent">{t.categories[p.category]}</span>
+                    <span className={`badge badge-phase-${p.phase}`}>{t.common.phase(p.phase)}</span>
+                    <span className="xs muted bold">{p.suggestedSeconds}s</span>
+                    {count > 0 && <span className="badge badge-success">{t.questions.practised(count)}</span>}
                   </div>
-                  <div style={{ fontWeight: 600 }}>{p.text}</div>
+                  <div className="list-title" lang="en">
+                    {p.text}
+                  </div>
+                  {settings.showHintsTr && (
+                    <p className="small muted m0" lang="tr">
+                      {p.hintTr}
+                    </p>
+                  )}
                   {open && p.hints && (
-                    <ul className="bullets small muted" style={{ marginTop: '0.4rem' }}>
+                    <ul className="bullets small" style={{ marginTop: 8 }} lang="en">
                       {p.hints.map((h) => (
                         <li key={h}>{h}</li>
                       ))}
                     </ul>
                   )}
                 </div>
-                <div className="row">
+                <div className="list-actions">
                   {p.hints && (
                     <button
                       type="button"
@@ -127,18 +140,20 @@ export default function QuestionsPage() {
                       onClick={() => setOpenId(open ? null : p.id)}
                       aria-expanded={open}
                     >
-                      {open ? 'Hide hints' : 'Hints'}
+                      {open ? <ChevronUp size={16} aria-hidden /> : <Lightbulb size={16} aria-hidden />}
+                      {open ? t.questions.hideIdeas : t.questions.ideas}
                     </button>
                   )}
-                  <Link className="btn btn-sm" to={`/record?prompt=${p.id}`}>
-                    🎙 Practise
+                  <Link className="btn btn-sm btn-primary" to={`/record?prompt=${p.id}`}>
+                    <Mic size={16} aria-hidden />
+                    {t.questions.practise}
                   </Link>
                 </div>
               </div>
             </div>
           )
         })}
-      </div>
+      </section>
     </div>
   )
 }

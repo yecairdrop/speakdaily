@@ -1,11 +1,15 @@
+import { GitCompareArrows } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { formatDateTime, formatDuration } from '../lib/dates'
+import { useI18n } from '../hooks/useI18n'
+import type { Messages } from '../i18n'
+import { formatDuration } from '../lib/dates'
 import type { Recording } from '../types'
+import { EmptyState } from './ui/EmptyState'
 import { HighlightedTranscript } from './HighlightedTranscript'
 import { MediaPlayback } from './MediaPlayback'
 
 interface Metric {
-  label: string
+  label: (t: Messages) => string
   value: (r: Recording) => number | null
   format?: (v: number) => string
   /** Which value is better: higher, lower, or closest to a target. */
@@ -15,25 +19,25 @@ interface Metric {
 const TARGET_WPM = 130
 
 const METRICS: Metric[] = [
-  { label: 'Duration', value: (r) => r.durationSec, format: formatDuration, better: 'higher' },
-  { label: 'Words', value: (r) => r.analysis.wordCount, better: 'higher' },
-  { label: 'Words / min', value: (r) => r.analysis.wordsPerMinute, better: { target: TARGET_WPM } },
-  { label: 'Fillers', value: (r) => r.analysis.fillerTotal, better: 'lower' },
-  { label: 'Fillers / min', value: (r) => r.analysis.fillersPerMinute, better: 'lower' },
+  { label: (t) => t.compare.metrics.duration, value: (r) => r.durationSec, format: formatDuration, better: 'higher' },
+  { label: (t) => t.compare.metrics.words, value: (r) => r.analysis.wordCount, better: 'higher' },
+  { label: (t) => t.compare.metrics.wpm, value: (r) => r.analysis.wordsPerMinute, better: { target: TARGET_WPM } },
+  { label: (t) => t.compare.metrics.fillers, value: (r) => r.analysis.fillerTotal, better: 'lower' },
+  { label: (t) => t.compare.metrics.fillersPerMin, value: (r) => r.analysis.fillersPerMinute, better: 'lower' },
   {
-    label: 'Longest pause',
+    label: (t) => t.compare.metrics.longestPause,
     value: (r) => r.analysis.longestPauseSec,
     format: (v) => `${v}s`,
     better: 'lower',
   },
   {
-    label: 'Vocab variety',
+    label: (t) => t.compare.metrics.variety,
     value: (r) => r.analysis.vocabularyVariety,
     format: (v) => `${Math.round(v * 100)}%`,
     better: 'higher',
   },
-  { label: 'Connectors used', value: (r) => r.analysis.connectorsUsed.length, better: 'higher' },
-  { label: 'Shadowing match', value: (r) => r.similarity ?? null, format: (v) => `${v}%`, better: 'higher' },
+  { label: (t) => t.compare.metrics.connectors, value: (r) => r.analysis.connectorsUsed.length, better: 'higher' },
+  { label: (t) => t.compare.metrics.match, value: (r) => r.similarity ?? null, format: (v) => `${v}%`, better: 'higher' },
 ]
 
 function winner(m: Metric, a: number | null, b: number | null): 'a' | 'b' | null {
@@ -57,6 +61,7 @@ interface Props {
 
 /** Pick two attempts at the same prompt and compare their stats side by side. */
 export function ComparePanel({ recordings, initialGroup }: Props) {
+  const { t, formatDateTime } = useI18n()
   const groups = useMemo(() => {
     const map = new Map<string, Recording[]>()
     for (const r of recordings) {
@@ -75,11 +80,7 @@ export function ComparePanel({ recordings, initialGroup }: Props) {
   const [pick, setPick] = useState<{ a: string | null; b: string | null }>({ a: null, b: null })
 
   if (!group) {
-    return (
-      <p className="empty">
-        Record the same prompt at least twice (use “Record again”, or revisit an old prompt) to compare attempts.
-      </p>
-    )
+    return <EmptyState icon={GitCompareArrows} title={t.archive.tabCompare} text={t.compare.empty} />
   }
 
   const recA = group.recs.find((r) => r.id === pick.a) ?? group.recs[0]
@@ -90,11 +91,11 @@ export function ComparePanel({ recordings, initialGroup }: Props) {
       className="input"
       value={current.id}
       onChange={(e) => setPick((p) => ({ ...p, [side]: e.target.value }))}
-      aria-label={side === 'a' ? 'First recording' : 'Second recording'}
+      aria-label={side === 'a' ? t.compare.first : t.compare.second}
     >
       {group.recs.map((r) => (
         <option key={r.id} value={r.id}>
-          {formatDateTime(r.createdAt)} · {r.analysis.wordsPerMinute} WPM
+          {formatDateTime(r.createdAt)} · {t.archive.wpm(r.analysis.wordsPerMinute)}
         </option>
       ))}
     </select>
@@ -103,7 +104,7 @@ export function ComparePanel({ recordings, initialGroup }: Props) {
   return (
     <div className="stack">
       <div className="field" style={{ marginBottom: 0 }}>
-        <label htmlFor="compare-prompt">Prompt</label>
+        <label htmlFor="compare-prompt">{t.compare.prompt}</label>
         <select
           id="compare-prompt"
           className="input"
@@ -114,7 +115,7 @@ export function ComparePanel({ recordings, initialGroup }: Props) {
           }}
         >
           {groups.map((g) => (
-            <option key={g.key} value={g.key}>
+            <option key={g.key} value={g.key} lang="en">
               ({g.recs.length}×) {g.recs[0].promptText.slice(0, 90)}
             </option>
           ))}
@@ -125,7 +126,7 @@ export function ComparePanel({ recordings, initialGroup }: Props) {
         <table className="compare-table">
           <thead>
             <tr>
-              <th style={{ width: '30%' }}>Metric</th>
+              <th style={{ width: '30%' }}>{t.compare.metric}</th>
               <th>{selectFor('a', recA)}</th>
               <th>{selectFor('b', recB)}</th>
             </tr>
@@ -138,8 +139,8 @@ export function ComparePanel({ recordings, initialGroup }: Props) {
               const w = winner(m, a, b)
               const fmt = (v: number | null) => (v === null ? '—' : m.format ? m.format(v) : String(v))
               return (
-                <tr key={m.label}>
-                  <td className="muted">{m.label}</td>
+                <tr key={m.label(t)}>
+                  <td className="muted">{m.label(t)}</td>
                   <td className={w === 'a' ? 'better' : ''}>{fmt(a)}</td>
                   <td className={w === 'b' ? 'better' : ''}>{fmt(b)}</td>
                 </tr>
@@ -147,8 +148,8 @@ export function ComparePanel({ recordings, initialGroup }: Props) {
             })}
           </tbody>
         </table>
-        <p className="small muted" style={{ marginTop: '0.4rem' }}>
-          Green = better. For WPM, closer to ~{TARGET_WPM} is better.
+        <p className="xs muted" style={{ marginTop: 8 }}>
+          {t.compare.betterHint(TARGET_WPM)}
         </p>
       </div>
 

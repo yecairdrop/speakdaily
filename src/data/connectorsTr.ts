@@ -17,3 +17,7 @@ export const CONNECTOR_MEANINGS_TR: Record<(typeof CONNECTORS)[number], string> 
   "that's why": 'bu yüzden — sonuç bildirirken',
   'apart from that': 'bunun dışında — yeni bir nokta eklerken',
 }
+
+export function connectorMeaningTr(phrase: string): string | undefined {
+  return (CONNECTOR_MEANINGS_TR as Record<string, string>)[phrase]
+}

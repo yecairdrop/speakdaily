@@ -1,5 +1,8 @@
+import { CircleCheck, Gauge, Link2, MessageCircleWarning, Sparkles, Timer } from 'lucide-react'
+import { useI18n } from '../hooks/useI18n'
 import { formatDuration } from '../lib/dates'
 import type { Prompt, Recording } from '../types'
+import { StatCard } from './AnalysisView'
 import { RecordingRow } from './RecordingRow'
 
 interface Props {
@@ -13,42 +16,27 @@ function avg(values: number[]): number {
 }
 
 export function MockSummary({ questions, answers }: Props) {
+  const { t } = useI18n()
   const recs = questions.map((q) => answers.get(q.id)).filter((r): r is Recording => r !== undefined)
   const totalSec = recs.reduce((s, r) => s + r.durationSec, 0)
   const totalFillers = recs.reduce((s, r) => s + r.analysis.fillerTotal, 0)
   const connectors = new Set(recs.flatMap((r) => r.analysis.connectorsUsed))
+  const fillersPerMin = totalSec > 0 ? Math.round((totalFillers / (totalSec / 60)) * 10) / 10 : 0
 
   return (
-    <div className="stack">
-      <div className="stat-grid">
-        <div className="stat">
-          <div className="stat-label">Answered</div>
-          <div className="stat-value">
-            {recs.length}/{questions.length}
-          </div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Speaking time</div>
-          <div className="stat-value">{formatDuration(totalSec)}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Avg WPM</div>
-          <div className="stat-value">{Math.round(avg(recs.map((r) => r.analysis.wordsPerMinute)))}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Fillers</div>
-          <div className="stat-value">{totalFillers}</div>
-          <div className="stat-sub">{totalSec > 0 ? (totalFillers / (totalSec / 60)).toFixed(1) : 0} / min</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Connectors</div>
-          <div className="stat-value">{connectors.size}</div>
-          <div className="stat-sub">different ones used</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Vocab variety</div>
-          <div className="stat-value">{Math.round(avg(recs.map((r) => r.analysis.vocabularyVariety)) * 100)}%</div>
-        </div>
+    <div className="stack-lg">
+      <div className="stat-grid stat-grid-6">
+        <StatCard icon={CircleCheck} tone="mint" label={t.mock.answered} value={`${recs.length}/${questions.length}`} />
+        <StatCard icon={Timer} label={t.mock.speakingTime} value={formatDuration(totalSec)} />
+        <StatCard icon={Gauge} label={t.mock.avgWpm} value={Math.round(avg(recs.map((r) => r.analysis.wordsPerMinute)))} />
+        <StatCard icon={MessageCircleWarning} tone="sun" label={t.mock.fillers} value={totalFillers} sub={t.analysis.perMin(fillersPerMin)} />
+        <StatCard icon={Link2} tone="mint" label={t.mock.connectors} value={connectors.size} sub={t.mock.differentOnes} />
+        <StatCard
+          icon={Sparkles}
+          tone="sun"
+          label={t.mock.variety}
+          value={`${Math.round(avg(recs.map((r) => r.analysis.vocabularyVariety)) * 100)}%`}
+        />
       </div>
 
       <div style={{ overflowX: 'auto' }}>
@@ -56,11 +44,11 @@ export function MockSummary({ questions, answers }: Props) {
           <thead>
             <tr>
               <th>#</th>
-              <th>Question</th>
-              <th>Time</th>
-              <th>WPM</th>
-              <th>Fillers</th>
-              <th>Connectors</th>
+              <th>{t.mock.colQuestion}</th>
+              <th>{t.mock.colTime}</th>
+              <th>{t.mock.colWpm}</th>
+              <th>{t.mock.colFillers}</th>
+              <th>{t.mock.colConnectors}</th>
             </tr>
           </thead>
           <tbody>
@@ -69,7 +57,7 @@ export function MockSummary({ questions, answers }: Props) {
               return (
                 <tr key={q.id}>
                   <td className="muted">{i + 1}</td>
-                  <td>{q.text}</td>
+                  <td lang="en">{q.text}</td>
                   {r ? (
                     <>
                       <td>{formatDuration(r.durationSec)}</td>
@@ -79,7 +67,7 @@ export function MockSummary({ questions, answers }: Props) {
                     </>
                   ) : (
                     <td colSpan={4} className="muted">
-                      skipped
+                      {t.mock.skipped}
                     </td>
                   )}
                 </tr>
@@ -91,7 +79,7 @@ export function MockSummary({ questions, answers }: Props) {
 
       {recs.length > 0 && (
         <div>
-          <h3>Listen back</h3>
+          <h3>{t.mock.listenBack}</h3>
           {recs.map((r) => (
             <RecordingRow key={r.id} rec={r} />
           ))}

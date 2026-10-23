@@ -1,6 +1,9 @@
+import type { Messages } from '../i18n'
+import type { Recording } from '../types'
 import { toDateKey } from './dates'
 import { toMeta } from './db'
-import type { Recording } from '../types'
+
+type ExportLabels = Messages['exportFile']
 
 function extensionFor(mime: string): string {
   if (mime.includes('mp4')) return mime.startsWith('video') ? 'mp4' : 'm4a'
@@ -16,26 +19,26 @@ function slug(text: string): string {
     .slice(0, 40)
 }
 
-function transcriptFile(rec: Recording): string {
+function transcriptFile(rec: Recording, l: ExportLabels, locale: string): string {
   const a = rec.analysis
   return [
-    `Prompt: ${rec.promptText}`,
-    `Date: ${new Date(rec.createdAt).toLocaleString('en-GB')}`,
-    `Type: ${rec.kind} (${rec.category})`,
-    `Duration: ${rec.durationSec}s`,
-    `Words: ${a.wordCount} · WPM: ${a.wordsPerMinute} · Fillers: ${a.fillerTotal} (${a.fillersPerMinute}/min)`,
-    `Longest pause: ${a.longestPauseSec ?? 'n/a'}s · Vocabulary variety: ${Math.round(a.vocabularyVariety * 100)}%`,
-    `Connectors used: ${a.connectorsUsed.join(', ') || 'none'}`,
-    ...(rec.similarity !== undefined ? [`Shadowing match: ${rec.similarity}%`] : []),
+    `${l.prompt}: ${rec.promptText}`,
+    `${l.date}: ${new Date(rec.createdAt).toLocaleString(locale)}`,
+    `${l.type}: ${rec.kind} (${rec.category})`,
+    `${l.duration}: ${rec.durationSec}s`,
+    `${l.words}: ${a.wordCount} · ${l.wpm}: ${a.wordsPerMinute} · ${l.fillers}: ${a.fillerTotal} (${a.fillersPerMinute}${l.perMin})`,
+    `${l.pause}: ${a.longestPauseSec ?? '—'}s · ${l.variety}: ${Math.round(a.vocabularyVariety * 100)}%`,
+    `${l.connectors}: ${a.connectorsUsed.join(', ') || l.none}`,
+    ...(rec.similarity !== undefined ? [`${l.match}: ${rec.similarity}%`] : []),
     '',
-    'Transcript:',
-    rec.transcript || '(no speech recognised)',
+    `${l.transcript}:`,
+    rec.transcript || l.noSpeech,
     '',
   ].join('\n')
 }
 
 /** Builds a zip with one folder per recording (audio + transcript.txt) and a JSON index. */
-export async function exportRecordingsZip(recordings: Recording[]): Promise<Blob> {
+export async function exportRecordingsZip(recordings: Recording[], labels: ExportLabels, locale: string): Promise<Blob> {
   const { default: JSZip } = await import('jszip')
   const zip = new JSZip()
   const root = zip.folder(`speakdaily-${toDateKey()}`)
@@ -50,7 +53,7 @@ export async function exportRecordingsZip(recordings: Recording[]): Promise<Blob
     const folder = root.folder(name)
     if (!folder) continue
     folder.file(`${rec.hasVideo ? 'video' : 'audio'}.${extensionFor(rec.mimeType)}`, rec.audio)
-    folder.file('transcript.txt', transcriptFile(rec))
+    folder.file('transcript.txt', transcriptFile(rec, labels, locale))
   }
   root.file('recordings.json', JSON.stringify(recordings.map(toMeta), null, 2))
   return zip.generateAsync({ type: 'blob' })

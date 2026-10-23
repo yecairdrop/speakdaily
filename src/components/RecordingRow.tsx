@@ -1,6 +1,7 @@
+import { Briefcase, ChevronUp, Gauge, Headphones, MessageCircleWarning, Mic, Play, Target, Timer, Video } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { CATEGORY_LABELS } from '../data/prompts'
-import { formatDateTime, formatDuration } from '../lib/dates'
+import { useI18n } from '../hooks/useI18n'
+import { formatDuration } from '../lib/dates'
 import type { Recording } from '../types'
 import { HighlightedTranscript } from './HighlightedTranscript'
 import { MediaPlayback } from './MediaPlayback'
@@ -9,41 +10,66 @@ interface Props {
   rec: Recording
   showPrompt?: boolean
   actions?: ReactNode
-  selected?: boolean
 }
 
+const KIND_ICON = { speaking: Mic, shadowing: Headphones, mock: Briefcase } as const
+const KIND_TONE = { speaking: '', shadowing: 'mint', mock: 'rose' } as const
+
 /** One recording in a list: key stats, lazy audio player and expandable transcript. */
-export function RecordingRow({ rec, showPrompt = true, actions, selected = false }: Props) {
+export function RecordingRow({ rec, showPrompt = true, actions }: Props) {
+  const { t, formatDateTime } = useI18n()
   const [open, setOpen] = useState(false)
-  const label = rec.category === 'shadowing' ? 'Shadowing' : CATEGORY_LABELS[rec.category]
+  const Icon = KIND_ICON[rec.kind]
 
   return (
-    <div className={`list-item${selected ? ' selected' : ''}`}>
-      <div className="row spread" style={{ alignItems: 'flex-start' }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div className="row small muted" style={{ gap: '0.4rem' }}>
-            <span>{formatDateTime(rec.createdAt)}</span>
-            <span className="badge">{label}</span>
-            {rec.kind === 'mock' && <span className="badge badge-accent">Mock</span>}
-            {rec.hasVideo && <span className="badge">🎥 Video</span>}
+    <div className="list-item">
+      <div className="list-row">
+        <span className={`list-icon ${KIND_TONE[rec.kind]}`} aria-hidden>
+          <Icon size={20} />
+        </span>
+        <div className="list-main">
+          <div className="row xs muted" style={{ gap: 6 }}>
+            <span className="bold">{formatDateTime(rec.createdAt)}</span>
+            <span className="badge">{t.categories[rec.category]}</span>
+            {rec.kind === 'mock' && <span className="badge badge-accent">{t.archive.mockBadge}</span>}
+            {rec.hasVideo && (
+              <span className="badge">
+                <Video size={12} aria-hidden /> {t.archive.video}
+              </span>
+            )}
           </div>
-          {showPrompt && <div style={{ fontWeight: 600, margin: '0.25rem 0' }}>{rec.promptText}</div>}
-          <div className="row small" style={{ gap: '0.9rem' }}>
-            <span>⏱ {formatDuration(rec.durationSec)}</span>
-            <span>{rec.analysis.wordsPerMinute} WPM</span>
-            <span>{rec.analysis.fillerTotal} fillers</span>
-            {rec.similarity !== undefined && <span>{rec.similarity}% match</span>}
+          {showPrompt && (
+            <div className="list-title" lang="en">
+              {rec.promptText}
+            </div>
+          )}
+          <div className="meta-row">
+            <span>
+              <Timer size={14} aria-hidden /> {formatDuration(rec.durationSec)}
+            </span>
+            <span>
+              <Gauge size={14} aria-hidden /> {t.archive.wpm(rec.analysis.wordsPerMinute)}
+            </span>
+            <span>
+              <MessageCircleWarning size={14} aria-hidden /> {t.archive.fillers(rec.analysis.fillerTotal)}
+            </span>
+            {rec.similarity !== undefined && (
+              <span>
+                <Target size={14} aria-hidden /> {t.archive.match(rec.similarity)}
+              </span>
+            )}
           </div>
         </div>
-        <div className="row">
-          <button type="button" className="btn btn-sm" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-            {open ? 'Hide' : '▶ Listen'}
+        <div className="list-actions">
+          <button type="button" className="btn btn-sm btn-soft" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+            {open ? <ChevronUp size={16} aria-hidden /> : <Play size={14} fill="currentColor" aria-hidden />}
+            {open ? t.common.hide : t.common.listen}
           </button>
           {actions}
         </div>
       </div>
       {open && (
-        <div className="stack" style={{ marginTop: '0.75rem' }}>
+        <div className="stack" style={{ animation: 'pop-in 200ms ease both' }}>
           <MediaPlayback blob={rec.audio} video={rec.hasVideo} />
           <HighlightedTranscript text={rec.transcript} fillers={rec.analysis.fillers.map((f) => f.word)} />
         </div>

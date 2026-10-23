@@ -23,6 +23,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
   ttsRate: 0.9,
   ttsVoiceURI: null,
+  language: 'tr',
+  showHintsTr: true,
 }
 
 export interface DayProgress {

@@ -4,9 +4,10 @@ export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'stopping'
 
 export type RecorderErrorKind = 'permission-denied' | 'no-device' | 'unsupported' | 'in-use' | 'unknown'
 
+/** Error kind (translated in the UI) plus the raw browser message for unexpected errors. */
 export interface RecorderError {
   kind: RecorderErrorKind
-  message: string
+  detail?: string
 }
 
 export interface RecorderResult {
@@ -49,22 +50,15 @@ function toRecorderError(err: unknown): RecorderError {
   switch (name) {
     case 'NotAllowedError':
     case 'SecurityError':
-      return {
-        kind: 'permission-denied',
-        message:
-          'Microphone access was denied. Click the lock / camera icon in the address bar, allow the microphone for this site, then reload the page.',
-      }
+      return { kind: 'permission-denied' }
     case 'NotFoundError':
     case 'OverconstrainedError':
-      return { kind: 'no-device', message: 'No microphone (or camera) was found. Plug one in and try again.' }
+      return { kind: 'no-device' }
     case 'NotReadableError':
     case 'AbortError':
-      return {
-        kind: 'in-use',
-        message: 'Your microphone or camera seems to be used by another app. Close it and try again.',
-      }
+      return { kind: 'in-use' }
     default:
-      return { kind: 'unknown', message: err instanceof Error ? err.message : 'Could not start recording.' }
+      return { kind: 'unknown', detail: err instanceof Error ? err.message : undefined }
   }
 }
 
@@ -99,7 +93,7 @@ export function useRecorder(): RecorderState {
   const start = useCallback(
     async (opts?: { video?: boolean }) => {
       if (!isRecorderSupported()) {
-        setError({ kind: 'unsupported', message: 'Recording is not supported in this browser. Please use Chrome.' })
+        setError({ kind: 'unsupported' })
         return false
       }
       const video = !!opts?.video
