@@ -366,6 +366,8 @@ export const tr = {
     legendOkText: 'tanındı',
     legendMissed: 'kırmızı',
     legendMissedText: 'atlandı ya da farklı duyuldu',
+    hoverHint: 'Bir kelimenin üstüne gel (telefonda dokun), nasıl okunduğunu dinle. Önce kırmızılarla başla!',
+    pronounce: (word: string) => `“${word}” kelimesini dinle`,
     heardInstead: 'Tanıyıcının onun yerine duydukları',
     explain:
       'Benzerlik skoru: metindeki kelimelerin kaçını aynı sırayla söylediğin. Büyük/küçük harf ve noktalama önemsiz. Kırmızı kelimeler genelde bir telaffuz ipucudur — onları tek tek tekrar et.',

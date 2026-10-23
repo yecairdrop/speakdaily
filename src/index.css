@@ -1825,6 +1825,29 @@ mark.connector {
   color: var(--success);
 }
 
+/* Words in the shadowing report: hover / tap to hear the pronunciation */
+.word-btn {
+  font: inherit;
+  line-height: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0 2px;
+  margin: 0 -2px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.word-btn:hover,
+.word-btn:focus-visible {
+  background: var(--accent-soft);
+}
+
+.word-btn:active {
+  background: var(--accent-soft);
+  transform: scale(0.97);
+}
+
 .diff-missed {
   color: var(--danger);
   text-decoration: underline wavy;

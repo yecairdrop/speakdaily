@@ -363,6 +363,8 @@ export const en: Messages = {
     legendOkText: 'recognised',
     legendMissed: 'red',
     legendMissedText: 'missed or heard differently',
+    hoverHint: 'Hover over a word (tap on a phone) to hear how it’s pronounced. Start with the red ones!',
+    pronounce: (word) => `Hear “${word}”`,
     heardInstead: 'What the recogniser heard instead',
     explain:
       'Match score: how many of the passage’s words you said, in order. Case and punctuation are ignored. Red words are usually a pronunciation hint — repeat them one by one.',
