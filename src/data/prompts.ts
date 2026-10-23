@@ -1,4 +1,5 @@
 import type { Phase, Prompt, PromptCategory } from '../types'
+import { PROMPT_HINTS_TR } from './promptHintsTr'
 
 /**
  * Question bank for a computer-science student in Turkey preparing for corporate
@@ -13,7 +14,10 @@ function p(
   text: string,
   hints?: [string, string, string],
 ): Prompt {
-  return hints ? { id, category, phase, suggestedSeconds, text, hints } : { id, category, phase, suggestedSeconds, text }
+  const hintTr = PROMPT_HINTS_TR[id] ?? ''
+  return hints
+    ? { id, category, phase, suggestedSeconds, text, hints, hintTr }
+    : { id, category, phase, suggestedSeconds, text, hintTr }
 }
 
 export const PROMPTS: Prompt[] = [

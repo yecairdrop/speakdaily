@@ -9,12 +9,16 @@ export interface Prompt {
   phase: Phase
   suggestedSeconds: number
   hints?: [string, string, string]
+  /** One-line Turkish explanation of what the question asks and what to mention. */
+  hintTr: string
 }
 
 export interface Passage {
   id: string
   title: string
   text: string
+  /** Short Turkish summary shown before listening. */
+  summaryTr: string
 }
 
 export type ThemeMode = 'dark' | 'light'

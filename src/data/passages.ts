@@ -1,7 +1,8 @@
 import type { Passage } from '../types'
+import { PASSAGE_SUMMARIES_TR } from './passageSummariesTr'
 
 /** Short interview / workplace passages (40–80 words) for listen → speak-along → record shadowing. */
-export const PASSAGES: Passage[] = [
+const RAW_PASSAGES: Omit<Passage, 'summaryTr'>[] = [
   {
     id: 'sh-01',
     title: 'A short self-introduction',
@@ -163,5 +164,7 @@ export const PASSAGES: Passage[] = [
     text: "When I build a login system, the first rule is never to store passwords in plain text. I use a strong hashing algorithm with a salt. I also make sure everything runs over HTTPS and limit the number of login attempts to stop brute-force attacks. For sensitive applications, adding two-factor authentication is one of the best improvements you can make.",
   },
 ]
+
+export const PASSAGES: Passage[] = RAW_PASSAGES.map((ps) => ({ ...ps, summaryTr: PASSAGE_SUMMARIES_TR[ps.id] ?? '' }))
 
 export const PASSAGES_BY_ID: ReadonlyMap<string, Passage> = new Map(PASSAGES.map((ps) => [ps.id, ps]))
