@@ -7,7 +7,7 @@ No backend, no account. Everything (including audio) stays in your browser.
 
 > Built with React 19, Vite, TypeScript (strict), IndexedDB, MediaRecorder and the Web Speech API.
 
-**Live demo:** https://yecairdrop.github.io/speakdaily/
+**Live demo:** https://speakdaily-coral.vercel.app
 
 ---
 
@@ -129,6 +129,21 @@ npm run preview    # serve the production build
 ```
 
 **Browser:** use **Google Chrome** (desktop or Android). Live transcription relies on the Web Speech API, which Chrome supports best. In Chrome it sends audio to Google's speech service, so it needs an internet connection. Other browsers can still record and play back; the app tells you clearly what isn't supported. Microphone access needs `https` or `localhost`.
+
+## Deploy on Vercel
+
+The live demo runs on Vercel and doesn't depend on GitHub Actions.
+
+```bash
+npm i -g vercel
+vercel login                              # once
+vercel link --yes --project speakdaily    # once: creates/links the Vercel project
+vercel --prod                             # build on Vercel and publish to production
+```
+
+- **Base path:** `vite.config.ts` uses `base: '/'` when the `VERCEL` environment variable is set (Vercel sets it in its build environment), and `/speakdaily/` otherwise for GitHub Pages. The same code works on both hosts.
+- **No `vercel.json` needed:** routing uses `HashRouter`, so every screen lives after the `#` (e.g. `/#/archive`) and the server only ever serves `/`. Vercel auto-detects Vite (`npm run build` → `dist/`).
+- **Automatic deploys (optional):** to deploy on every push without the CLI, connect the GitHub repo in the Vercel dashboard (Project → Settings → Git).
 
 ## Deploy (GitHub Pages)
 
