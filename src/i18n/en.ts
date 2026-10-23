@@ -22,6 +22,7 @@ export const en: Messages = {
     minutesShort: 'min',
     secondsShort: 's',
     seconds: (n) => `${n} seconds`,
+    wordHint: 'Hover a word (tap on a phone) to see its Turkish meaning and hear it.',
     approx: 'approx.',
   },
 
@@ -375,7 +376,7 @@ export const en: Messages = {
     legendOkText: 'recognised',
     legendMissed: 'red',
     legendMissedText: 'missed or heard differently',
-    hoverHint: 'Hover over a word (tap on a phone) to hear how it’s pronounced. Start with the red ones!',
+    hoverHint: 'Hover a word (tap on a phone) to see its Turkish meaning and hear it. Start with the red ones!',
     pronounce: (word) => `Hear “${word}”`,
     heardInstead: 'What the recogniser heard instead',
     explain:
@@ -652,7 +653,7 @@ export const en: Messages = {
     steps: { learn: 'Learn', listen: 'Listen', practice: 'Practise', speak: 'Speak' },
     stepHelp: {
       learn: 'Look at each chunk’s meaning and example, press the speaker to hear it and repeat it out loud.',
-      listen: 'Listen to a short text that uses these chunks. Orange ones are the unit’s chunks; hover any word to hear it.',
+      listen: 'Listen to a short text that uses these chunks. Orange ones are the unit’s chunks; hover any word to see its Turkish meaning and hear it.',
       practice: 'First recognise the meanings, then choose the right chunk in a sentence. Mistakes come back at the end.',
       speak: 'Your turn: answer the question and try to use at least 3 of this unit’s chunks.',
     },

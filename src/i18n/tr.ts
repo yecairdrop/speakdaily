@@ -23,6 +23,7 @@ export const tr = {
     minutesShort: 'dk',
     secondsShort: 'sn',
     seconds: (n: number) => `${n} saniye`,
+    wordHint: 'Bir kelimenin üstüne gel (telefonda dokun): Türkçesini gör ve okunuşunu dinle.',
     approx: 'yaklaşık',
   },
 
@@ -378,7 +379,7 @@ export const tr = {
     legendOkText: 'tanındı',
     legendMissed: 'kırmızı',
     legendMissedText: 'atlandı ya da farklı duyuldu',
-    hoverHint: 'Bir kelimenin üstüne gel (telefonda dokun), nasıl okunduğunu dinle. Önce kırmızılarla başla!',
+    hoverHint: 'Bir kelimenin üstüne gel (telefonda dokun): Türkçesini gör, okunuşunu dinle. Önce kırmızılarla başla!',
     pronounce: (word: string) => `“${word}” kelimesini dinle`,
     heardInstead: 'Tanıyıcının onun yerine duydukları',
     explain:
@@ -658,7 +659,7 @@ export const tr = {
     steps: { learn: 'Öğren', listen: 'Dinle', practice: 'Alıştır', speak: 'Konuş' },
     stepHelp: {
       learn: 'Her kalıbın anlamına ve örnek cümlesine bak, hoparlöre basıp dinle ve yüksek sesle tekrar et.',
-      listen: 'Bu kalıpların geçtiği kısa metni dinle. Turuncu olanlar ünitenin kalıpları; herhangi bir kelimenin üstüne gelince okunuşunu duyarsın.',
+      listen: 'Bu kalıpların geçtiği kısa metni dinle. Turuncu olanlar ünitenin kalıpları; herhangi bir kelimenin üstüne gelince Türkçesini görür, okunuşunu duyarsın.',
       practice: 'Önce anlamları tanı, sonra cümlede doğru kalıbı seç. Yanlış yaptıkların sonda tekrar gelir.',
       speak: 'Şimdi sıra sende: soruyu cevaplarken bu ünitenin kalıplarından en az 3 tanesini kullanmaya çalış.',
     },

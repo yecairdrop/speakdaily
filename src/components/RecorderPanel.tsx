@@ -363,7 +363,7 @@ export function RecorderPanel({
           {showResult &&
             (referenceText ? (
               <>
-                <SimilarityView result={compareToReference(referenceText, result.transcript)} />
+                <SimilarityView result={compareToReference(referenceText, result.transcript)} text={referenceText} />
                 <StatGrid analysis={result.analysis} durationSec={result.durationSec} />
               </>
             ) : (

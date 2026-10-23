@@ -1825,7 +1825,40 @@ mark.connector {
   color: var(--success);
 }
 
-/* Words in the shadowing report: hover / tap to hear the pronunciation */
+/* Turkish meaning tooltip for hovered / tapped words (fixed, clamped to the viewport in JS) */
+.word-tip {
+  position: fixed;
+  z-index: 70;
+  transform: translate(-50%, -100%);
+  max-width: 260px;
+  width: max-content;
+  padding: 7px 12px;
+  border-radius: 12px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  animation: tip-in 120ms var(--ease) both;
+}
+
+.word-tip.below {
+  transform: translate(-50%, 0);
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Words in reading texts: hover / tap to hear the pronunciation and see the meaning */
 .word-btn {
   font: inherit;
   line-height: inherit;

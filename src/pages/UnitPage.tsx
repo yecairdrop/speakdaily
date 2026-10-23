@@ -144,6 +144,10 @@ function UnitView({ unit }: { unit: Unit }) {
               {unit.modelSummaryTr}
             </p>
           </Disclosure>
+          <p className="small m0 row" style={{ color: 'var(--secondary)', fontWeight: 700, flexWrap: 'nowrap', alignItems: 'flex-start' }}>
+            <Languages size={16} aria-hidden />
+            {t.common.wordHint}
+          </p>
           <InteractiveText text={unit.modelText} items={unit.items} charIndex={tts.charIndex} />
           <div className="row">
             <button

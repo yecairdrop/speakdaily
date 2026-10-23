@@ -1,11 +1,13 @@
 import { ArrowRight, Check, Headphones, Info, Languages, Play, Shuffle, Square } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { RecorderPanel } from '../components/RecorderPanel'
 import { SupportNotice } from '../components/SupportNotice'
 import { Disclosure } from '../components/ui/Disclosure'
 import { PageHeader } from '../components/ui/PageHeader'
 import { PASSAGES, PASSAGES_BY_ID } from '../data/passages'
+import { ALL_ITEMS } from '../data/units'
+import { InteractiveText } from '../components/vocab/InteractiveText'
 import { useApp } from '../hooks/useApp'
 import { useI18n } from '../hooks/useI18n'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
@@ -13,27 +15,6 @@ import { getProgramPosition, getTodayPlan, randomItem } from '../lib/program'
 import type { Passage } from '../types'
 
 type Step = 1 | 2 | 3
-
-function PassageText({ text, charIndex }: { text: string; charIndex: number | null }) {
-  const words = useMemo(() => {
-    const out: { word: string; start: number }[] = []
-    for (const m of text.matchAll(/\S+/g)) out.push({ word: m[0], start: m.index ?? 0 })
-    return out
-  }, [text])
-  let current = -1
-  if (charIndex !== null) {
-    for (let i = 0; i < words.length && words[i].start <= charIndex; i++) current = i
-  }
-  return (
-    <p className="passage" lang="en">
-      {words.map((w, i) => (
-        <span key={i}>
-          <span className={i === current ? 'current' : undefined}>{w.word}</span>{' '}
-        </span>
-      ))}
-    </p>
-  )
-}
 
 export default function ShadowingPage() {
   const [params, setParams] = useSearchParams()
@@ -115,7 +96,11 @@ export default function ShadowingPage() {
           </p>
         </Disclosure>
 
-        <PassageText text={passage.text} charIndex={tts.charIndex} />
+        <p className="small m0 row" style={{ color: 'var(--secondary)', fontWeight: 700, flexWrap: 'nowrap', alignItems: 'flex-start' }}>
+          <Languages size={16} aria-hidden />
+          {t.common.wordHint}
+        </p>
+        <InteractiveText text={passage.text} items={ALL_ITEMS} charIndex={tts.charIndex} highlight={false} />
 
         <div className="grid grid-2">
           <div className="field m0">
